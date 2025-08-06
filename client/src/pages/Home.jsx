@@ -2,6 +2,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { uploadPDF } from '../services/api';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faMagnifyingGlass,   // For Analyze PDF
+  faBrain,             // For Generate Quiz
+  faFileLines,         // For Summarize
+  faClone              // For Flashcards (or pick another that fits)
+} from '@fortawesome/free-solid-svg-icons';
+
 
 const Home = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -131,6 +139,7 @@ const Home = () => {
   };
 
   return (
+    
     <div className="home-container">
       {/* Animated Header */}
       <div className={`hero-section ${animateTitle ? 'animate-in' : ''}`}>
@@ -141,14 +150,14 @@ const Home = () => {
         </div>
         
         <h1 className="main-title">
-          🎓 Educational PDF AI
+           Educational PDF AI
           <span className="subtitle">Transform your PDFs into interactive learning experiences</span>
         </h1>
         
         <div className="feature-pills">
-          <span className="pill">🤖 AI-Powered</span>
-          <span className="pill">📊 Smart Analysis</span>
-          <span className="pill">🎯 Interactive Learning</span>
+          <span className="pill"> AI-Powered</span>
+          <span className="pill"> Smart Analysis</span>
+          <span className="pill"> Interactive Learning</span>
         </div>
       </div>
 
@@ -179,9 +188,9 @@ const Home = () => {
               <h3>Drop your PDF here or click to browse</h3>
               <p>Supports files up to 10MB • PDF format only</p>
               <div className="upload-features">
-                <span>✨ AI-powered analysis</span>
-                <span>📊 Instant insights</span>
-                <span>🎯 Learning tools</span>
+                <span> AI-powered analysis</span>
+                <span> Instant insights</span>
+                <span> Learning tools</span>
               </div>
             </div>
           )}
@@ -197,44 +206,55 @@ const Home = () => {
         
         {/* Development Note */}
         <div className="dev-note">
-          <p>💡 <strong>Development Mode:</strong> Uploaded files are stored temporarily in memory. Files will be lost when the server restarts.</p>
+          <p> <strong>Development Mode:</strong> Uploaded files are stored temporarily in memory. Files will be lost when the server restarts.</p>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="quick-actions">
-        <h3>🚀 Quick Actions</h3>
-        <div className="action-grid">
-          <button className="action-btn action-analyze" onClick={() => fileInputRef.current?.click()}>
-            <span className="action-icon">🔍</span>
-            <span className="action-text">Analyze PDF</span>
-            <span className="action-desc">Deep content analysis</span>
-          </button>
-          
-          <button className="action-btn action-quiz" onClick={() => fileInputRef.current?.click()}>
-            <span className="action-icon">🧠</span>
-            <span className="action-text">Generate Quiz</span>
-            <span className="action-desc">Auto-create questions</span>
-          </button>
-          
-          <button className="action-btn action-summary" onClick={() => fileInputRef.current?.click()}>
-            <span className="action-icon">📝</span>
-            <span className="action-text">Summarize</span>
-            <span className="action-desc">Key points extraction</span>
-          </button>
-          
-          <button className="action-btn action-flashcards" onClick={() => fileInputRef.current?.click()}>
-            <span className="action-icon">🎴</span>
-            <span className="action-text">Flashcards</span>
-            <span className="action-desc">Study cards generation</span>
-          </button>
-        </div>
-      </div>
+<div className="quick-actions">
+  <h3> Quick Actions</h3>
+  <div className="action-grid">
+
+    <button className="action-btn action-analyze" onClick={() => fileInputRef.current?.click()}>
+      <span className="action-icon">
+        <FontAwesomeIcon icon={faMagnifyingGlass} />
+      </span>
+      <span className="action-text">Analyze PDF</span>
+      <span className="action-desc">Deep content analysis</span>
+    </button>
+
+    <button className="action-btn action-quiz" onClick={() => fileInputRef.current?.click()}>
+      <span className="action-icon">
+        <FontAwesomeIcon icon={faBrain} />
+      </span>
+      <span className="action-text">Generate Quiz</span>
+      <span className="action-desc">Auto-create questions</span>
+    </button>
+
+    <button className="action-btn action-summary" onClick={() => fileInputRef.current?.click()}>
+      <span className="action-icon">
+        <FontAwesomeIcon icon={faFileLines} />
+      </span>
+      <span className="action-text">Summarize</span>
+      <span className="action-desc">Key points extraction</span>
+    </button>
+
+    <button className="action-btn action-flashcards" onClick={() => fileInputRef.current?.click()}>
+      <span className="action-icon">
+        <FontAwesomeIcon icon={faClone} />
+      </span>
+      <span className="action-text">Flashcards</span>
+      <span className="action-desc">Study cards generation</span>
+    </button>
+
+  </div>
+</div>
+
 
       {/* Recent Files */}
       {recentFiles.length > 0 && (
         <div className="recent-files">
-          <h3>📚 Recent Documents</h3>
+          <h3> Recent Documents</h3>
           <div className="files-grid">
             {recentFiles.map((file, index) => (
               <div 
