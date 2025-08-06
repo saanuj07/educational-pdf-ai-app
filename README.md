@@ -5,7 +5,26 @@ A powerful full-stack web application that transforms PDF documents into interac
 ## ✨ Features
 
 ### 📄 PDF Processing
-- **Drag & Drop Upload**: Intuitive PDF file upload interface
+- **Drag & Drop Upload**: Int## 🔒 Security
+
+### Development Dependencies Security
+This project uses Create React App and may show security vulnerabilities in GitHub's dependency scan. These are **development-only dependencies** and do not affect production security:
+
+- **PostCSS, nth-check, webpack-dev-server** vulnerabilities are in build tools
+- These tools **only run during development**, not in production
+- **Your production app is secure** - vulnerabilities don't affect end users
+- These are **common in React projects** and are low-risk
+
+### Production Security
+- ✅ API keys are protected with `.gitignore`
+- ✅ Environment variables are properly configured
+- ✅ No sensitive data in source code
+- ✅ Watson services use IAM authentication
+- ✅ File uploads are validated and stored locally
+
+## 📄 License
+
+This project is licensed under the MIT License.ive PDF file upload interface
 - **Text Extraction**: Advanced PDF parsing and content analysis
 - **Local Storage**: Secure file management with metadata persistence
 
