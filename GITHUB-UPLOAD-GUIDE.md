@@ -136,6 +136,7 @@ git push origin main
 ### ✅ What IS uploaded to GitHub:
 - All source code
 - Documentation and guides
+- One-click setup scripts (setup.ps1, setup.bat, setup.sh)
 - Example environment files (.env.example)
 - Project configuration files
 - License and CI/CD workflows
@@ -170,6 +171,45 @@ You can share this link to showcase your work, and others can:
 - Clone and run the project
 - Contribute improvements
 - Use it as a reference for their own projects
+
+## 🤝 Quick Setup Instructions for Friends
+
+When you share your project with friends, they can get it running with just **ONE COMMAND**:
+
+### For Windows Users:
+```powershell
+# Clone your repository first
+git clone https://github.com/YOURUSERNAME/educational-pdf-ai-app.git
+cd educational-pdf-ai-app
+
+# Run the setup script
+.\setup.ps1
+```
+
+### For Mac/Linux Users:
+```bash
+# Clone your repository first
+git clone https://github.com/YOURUSERNAME/educational-pdf-ai-app.git
+cd educational-pdf-ai-app
+
+# Run the setup script
+chmod +x setup.sh && ./setup.sh
+```
+
+### What the setup script does automatically:
+- ✅ Checks Node.js and npm installation
+- ✅ Creates all required directories
+- ✅ Installs all dependencies (root, server, client)
+- ✅ Copies environment file templates
+- ✅ Sets up storage and logging files
+- ✅ Provides clear next steps
+
+**Your friends only need to:**
+1. Run the setup command
+2. Add their Watson API keys to the `.env` files
+3. Run `npm start`
+
+**That's it! No complex installation steps needed.**
 
 ---
 

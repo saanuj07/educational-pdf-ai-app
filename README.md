@@ -49,6 +49,38 @@ A powerful full-stack web application that transforms PDF documents into interac
 
 ## 🚀 Quick Start
 
+### 🎯 One-Command Setup (Recommended)
+
+**For your friends who want to get started quickly:**
+
+1. **Download or clone the project**
+2. **Open PowerShell/Command Prompt** in the project folder
+3. **Run ONE of these commands:**
+
+   **PowerShell (Windows):**
+   ```powershell
+   .\setup.ps1
+   ```
+
+   **Command Prompt (Windows):**
+   ```cmd
+   setup.bat
+   ```
+
+   **Mac/Linux:**
+   ```bash
+   chmod +x setup.sh && ./setup.sh
+   ```
+
+4. **Configure Watson API keys** in the generated `.env` files
+5. **Start the app:** `npm start`
+
+**That's it! Everything will be installed and configured automatically.**
+
+---
+
+### 📋 Manual Installation (Advanced Users)
+
 ### Prerequisites
 - Node.js 16+ installed
 - npm or yarn package manager
