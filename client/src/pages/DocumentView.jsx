@@ -1,7 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { generateSummary, generateFlashcards, chatWithPDF } from '../services/api';
+import { generateSummary, generateFlashcards, chatWithPDF, generateQuiz } from '../services/api';
+import Quiz from '../components/Quiz';
+import '../styles/quiz.css';
 
 const DocumentView = () => {
   const { id: fileId } = useParams();
@@ -11,6 +13,7 @@ const DocumentView = () => {
   const [loading, setLoading] = useState(false);
   const [pdfData, setPdfData] = useState(null);
   const [loadingPdf, setLoadingPdf] = useState(true);
+  const [showQuiz, setShowQuiz] = useState(false);
 
   // Fetch PDF data when component mounts
   useEffect(() => {
@@ -66,7 +69,13 @@ const DocumentView = () => {
           setResult(`Q: ${response.question}\nA: ${response.answer}`);
           break;
         case 'quiz':
-          setResult('Quiz generation coming soon...');
+          try {
+            const quizResponse = await generateQuiz(fileId);
+            setShowQuiz(true);
+            setResult('');
+          } catch (error) {
+            setResult(`Quiz generation failed: ${error.message}`);
+          }
           break;
         case 'podcast':
           setResult('Podcast generation coming soon...');
@@ -152,34 +161,64 @@ const DocumentView = () => {
         </div>
         
         <div>
-          {tab === 'chat' && (
-            <textarea 
-              className="w-full h-32 border mb-2" 
-              placeholder="Ask a question about the PDF content..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-            />
-          )}
-          
-          {(tab === 'summary' || tab === 'flashcards') && (
-            <div className="mb-2 p-2 border rounded bg-gray-50">
-              <p className="text-sm text-gray-600">
-                Click Generate to create {tab} from your PDF content
-              </p>
+          {tab === 'quiz' && showQuiz ? (
+            <div className="quiz-wrapper">
+              <Quiz 
+                fileId={fileId} 
+                onClose={() => {
+                  setShowQuiz(false);
+                  setResult('Quiz completed successfully!');
+                }}
+              />
             </div>
+          ) : (
+            <>
+              {tab === 'chat' && (
+                <textarea 
+                  className="w-full h-32 border mb-2" 
+                  placeholder="Ask a question about the PDF content..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                />
+              )}
+              
+              {(tab === 'summary' || tab === 'flashcards') && (
+                <div className="mb-2 p-2 border rounded bg-gray-50">
+                  <p className="text-sm text-gray-600">
+                    Click Generate to create {tab} from your PDF content
+                  </p>
+                </div>
+              )}
+
+              {tab === 'quiz' && !showQuiz && (
+                <div className="mb-2 p-2 border rounded bg-gray-50">
+                  <p className="text-sm text-gray-600">
+                    Click Generate to create an interactive quiz from your PDF content
+                  </p>
+                </div>
+              )}
+
+              {tab === 'podcast' && (
+                <div className="mb-2 p-2 border rounded bg-gray-50">
+                  <p className="text-sm text-gray-600">
+                    Podcast generation coming soon...
+                  </p>
+                </div>
+              )}
+              
+              <button 
+                className={`px-4 py-2 rounded text-white ${loading ? 'bg-gray-400' : 'bg-blue-500'}`}
+                onClick={handleGenerate}
+                disabled={loading}
+              >
+                {loading ? 'Generating...' : 'Generate'}
+              </button>
+              
+              <div className="mt-4 p-2 border rounded bg-gray-50 min-h-[200px] whitespace-pre-wrap">
+                {result || 'Results will appear here...'}
+              </div>
+            </>
           )}
-          
-          <button 
-            className={`px-4 py-2 rounded text-white ${loading ? 'bg-gray-400' : 'bg-blue-500'}`}
-            onClick={handleGenerate}
-            disabled={loading}
-          >
-            {loading ? 'Generating...' : 'Generate'}
-          </button>
-          
-          <div className="mt-4 p-2 border rounded bg-gray-50 min-h-[200px] whitespace-pre-wrap">
-            {result || 'Results will appear here...'}
-          </div>
         </div>
       </div>
     </div>

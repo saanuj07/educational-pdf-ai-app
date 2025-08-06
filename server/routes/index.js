@@ -82,8 +82,16 @@ router.get('/health', (req, res) => {
 
 router.use('/generate-summary', summary);
 router.use('/generate-flashcards', flashcards);
-router.use('/generate-quiz', quiz);
+router.use('/quiz', quiz);
 router.use('/generate-podcast', podcast);
 router.use('/chat', chat);
+
+console.log('📁 All routes loaded:', {
+  summary: '/api/generate-summary',
+  flashcards: '/api/generate-flashcards', 
+  quiz: '/api/quiz',
+  podcast: '/api/generate-podcast',
+  chat: '/api/chat'
+});
 
 module.exports = router;
