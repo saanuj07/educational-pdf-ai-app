@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { generateSummary, generateFlashcards, chatWithPDF, generateQuiz } from '../services/api';
 import Quiz from '../components/Quiz';
+import Flashcard from '../components/Flashcard';
 import '../styles/quiz.css';
+import '../styles/flashcard.css';
 
 const DocumentView = () => {
   const { id: fileId } = useParams();
@@ -14,6 +16,7 @@ const DocumentView = () => {
   const [pdfData, setPdfData] = useState(null);
   const [loadingPdf, setLoadingPdf] = useState(true);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [showFlashcards, setShowFlashcards] = useState(false);
 
   // Fetch PDF data when component mounts
   useEffect(() => {
@@ -55,10 +58,12 @@ const DocumentView = () => {
           setResult(response.summary);
           break;
         case 'flashcards':
-          response = await generateFlashcards(fileId);
-          setResult(response.flashcards.map((card, idx) => 
-            `${idx + 1}. Q: ${card.question}\nA: ${card.answer}`
-          ).join('\n\n'));
+          try {
+            setShowFlashcards(true);
+            setResult('');
+          } catch (error) {
+            setResult(`Flashcard generation failed: ${error.message}`);
+          }
           break;
         case 'chat':
           if (!input.trim()) {
@@ -171,6 +176,16 @@ const DocumentView = () => {
                 }}
               />
             </div>
+          ) : tab === 'flashcards' && showFlashcards ? (
+            <div className="flashcard-wrapper">
+              <Flashcard 
+                documentId={fileId} 
+                onClose={() => {
+                  setShowFlashcards(false);
+                  setResult('Flashcard session completed successfully!');
+                }}
+              />
+            </div>
           ) : (
             <>
               {tab === 'chat' && (
@@ -182,7 +197,15 @@ const DocumentView = () => {
                 />
               )}
               
-              {(tab === 'summary' || tab === 'flashcards') && (
+              {tab === 'flashcards' && !showFlashcards && (
+                <div className="mb-2 p-2 border rounded bg-gray-50">
+                  <p className="text-sm text-gray-600">
+                    Click Generate to start an interactive flashcard session from your PDF content
+                  </p>
+                </div>
+              )}
+
+              {(tab === 'summary') && (
                 <div className="mb-2 p-2 border rounded bg-gray-50">
                   <p className="text-sm text-gray-600">
                     Click Generate to create {tab} from your PDF content
