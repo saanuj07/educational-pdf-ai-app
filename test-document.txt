@@ -1,0 +1,11 @@
+Test PDF content for local storage verification.
+
+This is a sample document to test the new local storage functionality. The file should be saved to the uploads directory and metadata should be stored in metadata.json.
+
+Key features tested:
+- PDF upload to local disk
+- Metadata persistence
+- File retrieval from local storage
+- Cross-session persistence
+
+This test document contains multiple sentences to verify the summary generation and other AI features work correctly with the local storage system.

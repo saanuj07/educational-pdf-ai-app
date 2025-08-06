@@ -1,0 +1,8 @@
+{
+  "name": "my-educational-app-global",
+  "version": "1.0.0",
+  "bin": {
+    "start-edu-app": "./global-start.js"
+  },
+  "dependencies": {}
+}
