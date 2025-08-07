@@ -18,11 +18,11 @@
     "@fortawesome/react-fontawesome": "^0.2.3",
     "@sentry/react": "^10.1.0",
     "autoprefixer": "^10.4.21",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "react-pdf": "^10.0.1",
-    "react-router-dom": "^7.7.1",
-    "react-scripts": "^5.0.1"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-pdf": "^7.7.0",
+    "react-router-dom": "^6.26.0",
+    "react-scripts": "5.0.1"
   },
   "browserslist": {
     "production": [
@@ -42,6 +42,11 @@
   "overrides": {
     "postcss": "^8.4.47",
     "nth-check": "^2.1.1",
-    "webpack-dev-server": "^5.2.1"
+    "webpack-dev-server": "^4.11.1",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0"
+  },
+  "resolutions": {
+    "webpack-dev-server": "^4.11.1"
   }
 }
