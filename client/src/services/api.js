@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001/api';
 
 // Enhanced error handling with detailed logging
 const handleApiError = async (response, endpoint) => {
@@ -167,5 +167,49 @@ export const generateQuiz = async (fileId) => {
     }
     
     throw new Error(`QUIZ_UNKNOWN: Unexpected error during quiz generation: ${error.message}`);
+  }
+};
+
+export const generatePodcast = async (fileId) => {
+  try {
+    console.log('🎙️ Generating podcast for file:', fileId);
+    
+    if (!fileId) {
+      throw new Error('Missing fileId parameter. Please ensure a document is selected.');
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/generate-podcast`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileId }),
+      signal: AbortSignal.timeout(60000) // 60 second timeout for audio generation
+    });
+    
+    if (!response.ok) {
+      await handleApiError(response, '/generate-podcast');
+    }
+    
+    const result = await response.json();
+    
+    console.log('✅ Podcast generated successfully:', {
+      audioUrl: result.podcast?.audioUrl || result.fallback?.audioUrl,
+      duration: result.podcast?.duration || result.fallback?.duration,
+      syncDataPoints: result.podcast?.syncData?.length || result.fallback?.syncData?.length,
+      source: result.success ? 'Watson TTS' : 'Mock Data',
+      fileId: fileId
+    });
+    
+    return result;
+    
+  } catch (error) {
+    console.error('🚨 Podcast generation failed:', error);
+    
+    if (error.name === 'TimeoutError') {
+      throw new Error('Podcast generation timed out. The document might be too large. Please try again.');
+    } else if (error.message.includes('Failed to fetch')) {
+      throw new Error('Cannot connect to podcast service. Please check if the backend server is running.');
+    }
+    
+    throw new Error(`Podcast generation error: ${error.message}`);
   }
 };

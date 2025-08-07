@@ -4,8 +4,12 @@ import { useParams } from 'react-router-dom';
 import { generateSummary, generateFlashcards, chatWithPDF, generateQuiz } from '../services/api';
 import Quiz from '../components/Quiz';
 import Flashcard from '../components/Flashcard';
+import PDFViewer from '../components/PDFViewer';
+import PodcastPlayer from '../components/PodcastPlayer';
 import '../styles/quiz.css';
 import '../styles/flashcard.css';
+import '../styles/pdf-viewer.css';
+import '../styles/podcast.css';
 
 const DocumentView = () => {
   const { id: fileId } = useParams();
@@ -17,12 +21,13 @@ const DocumentView = () => {
   const [loadingPdf, setLoadingPdf] = useState(true);
   const [showQuiz, setShowQuiz] = useState(false);
   const [showFlashcards, setShowFlashcards] = useState(false);
+  const [showPodcast, setShowPodcast] = useState(false);
 
   // Fetch PDF data when component mounts
   useEffect(() => {
     const fetchPdfData = async () => {
       try {
-        const apiUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
+        const apiUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001/api';
         const response = await fetch(`${apiUrl}/document/${fileId}`);
         if (response.ok) {
           const data = await response.json();
@@ -83,7 +88,12 @@ const DocumentView = () => {
           }
           break;
         case 'podcast':
-          setResult('Podcast generation coming soon...');
+          try {
+            setShowPodcast(true);
+            setResult('');
+          } catch (error) {
+            setResult(`Podcast generation failed: ${error.message}`);
+          }
           break;
         default:
           setResult('Feature not implemented yet');
@@ -97,62 +107,11 @@ const DocumentView = () => {
 
   return (
     <div className="flex h-screen">
-      <div className="w-1/2 border-r p-4 overflow-auto">
-        <div className="text-center p-4 border rounded bg-gray-50">
-          <h3 className="text-xl mb-4">PDF Viewer</h3>
-          {loadingPdf ? (
-            <p className="text-gray-500">Loading PDF content...</p>
-          ) : pdfData?.error ? (
-            <div className="text-center p-6">
-              <div className="text-red-500 mb-4">
-                <h4 className="text-lg font-semibold">❌ {pdfData.error}</h4>
-                {pdfData.needReupload && (
-                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
-                    <p className="text-yellow-800 text-sm">
-                      <strong>Why did this happen?</strong><br/>
-                      PDF files are stored in server memory and are lost when the development server restarts.
-                    </p>
-                    <p className="text-yellow-800 text-sm mt-2">
-                      <strong>Solution:</strong> Please go back to the home page and upload your PDF again.
-                    </p>
-                    <button 
-                      onClick={() => window.location.href = '/'}
-                      className="mt-3 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                      🏠 Go to Home Page
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : pdfData ? (
-            <div className="text-left">
-              <div className="mb-4 p-3 bg-blue-50 border rounded">
-                <h4 className="font-semibold text-blue-800">📄 {pdfData.filename}</h4>
-                <p className="text-sm text-blue-600">
-                  {pdfData.numPages} page{pdfData.numPages > 1 ? 's' : ''} • 
-                  {pdfData.text?.length || 0} characters
-                </p>
-                <p className="text-xs text-gray-500">Uploaded: {new Date(pdfData.uploadDate).toLocaleDateString()}</p>
-              </div>
-              
-              <div className="max-h-96 overflow-y-auto p-4 border rounded bg-white text-sm">
-                <h5 className="font-semibold mb-2">PDF Content:</h5>
-                <div className="whitespace-pre-wrap text-gray-700">
-                  {pdfData.text || 'No text content extracted from PDF'}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-red-500">
-              <p>❌ Failed to load PDF content</p>
-              <p className="text-xs text-gray-400 mt-2">File ID: {fileId}</p>
-            </div>
-          )}
-        </div>
+      <div className="w-4/5 border-r overflow-hidden">
+        <PDFViewer pdfData={pdfData} fileId={fileId} />
       </div>
       
-      <div className="w-1/2 p-4">
+      <div className="w-1/5 p-4">
         <div className="flex space-x-2 mb-4">
           {['chat', 'summary', 'flashcards', 'quiz', 'podcast'].map(t => (
             <button 
@@ -186,6 +145,16 @@ const DocumentView = () => {
                 }}
               />
             </div>
+          ) : tab === 'podcast' && showPodcast ? (
+            <div className="podcast-wrapper">
+              <PodcastPlayer 
+                documentId={fileId} 
+                onClose={() => {
+                  setShowPodcast(false);
+                  setResult('Podcast session completed successfully!');
+                }}
+              />
+            </div>
           ) : (
             <>
               {tab === 'chat' && (
@@ -199,7 +168,7 @@ const DocumentView = () => {
               
               {tab === 'flashcards' && !showFlashcards && (
                 <div className="mb-2 p-2 border rounded bg-gray-50">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs text-gray-600">
                     Click Generate to start an interactive flashcard session from your PDF content
                   </p>
                 </div>
@@ -207,7 +176,7 @@ const DocumentView = () => {
 
               {(tab === 'summary') && (
                 <div className="mb-2 p-2 border rounded bg-gray-50">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs text-gray-600">
                     Click Generate to create {tab} from your PDF content
                   </p>
                 </div>
@@ -215,16 +184,16 @@ const DocumentView = () => {
 
               {tab === 'quiz' && !showQuiz && (
                 <div className="mb-2 p-2 border rounded bg-gray-50">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs text-gray-600">
                     Click Generate to create an interactive quiz from your PDF content
                   </p>
                 </div>
               )}
 
-              {tab === 'podcast' && (
+              {tab === 'podcast' && !showPodcast && (
                 <div className="mb-2 p-2 border rounded bg-gray-50">
-                  <p className="text-sm text-gray-600">
-                    Podcast generation coming soon...
+                  <p className="text-xs text-gray-600">
+                    Click Generate to create an interactive podcast with synchronized PDF viewing from your document
                   </p>
                 </div>
               )}
