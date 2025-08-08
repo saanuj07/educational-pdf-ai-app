@@ -52,7 +52,7 @@ const PodcastPlayer = ({ documentId, onClose }) => {
         // Convert relative URL to absolute URL
         const podcastData = { ...response.podcast };
         if (podcastData.audioUrl && podcastData.audioUrl.startsWith('/api/')) {
-          podcastData.audioUrl = `http://localhost:5001${podcastData.audioUrl}`;
+          podcastData.audioUrl = `http://localhost:5000${podcastData.audioUrl}`;
           console.log('🔗 Converted audio URL to:', podcastData.audioUrl);
         }
         setPodcastData(podcastData);
@@ -61,7 +61,7 @@ const PodcastPlayer = ({ documentId, onClose }) => {
         // Convert relative URL to absolute URL for fallback too
         const fallbackData = { ...response.fallback };
         if (fallbackData.audioUrl && fallbackData.audioUrl.startsWith('/api/')) {
-          fallbackData.audioUrl = `http://localhost:5001${fallbackData.audioUrl}`;
+          fallbackData.audioUrl = `http://localhost:5000${fallbackData.audioUrl}`;
           console.log('🔗 Converted fallback audio URL to:', fallbackData.audioUrl);
         }
         setPodcastData(fallbackData);
@@ -264,7 +264,7 @@ const PodcastPlayer = ({ documentId, onClose }) => {
           >
             ⏪
           </button>
-          
+        
           <button 
             className={`play-btn ${playing ? 'playing' : ''}`}
             onClick={handlePlay}

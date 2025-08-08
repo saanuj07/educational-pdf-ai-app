@@ -6,10 +6,13 @@ import Quiz from '../components/Quiz';
 import Flashcard from '../components/Flashcard';
 import PDFViewer from '../components/PDFViewer';
 import PodcastPlayer from '../components/PodcastPlayer';
+import AIAgent from '../components/AIAgent';
 import '../styles/quiz.css';
 import '../styles/flashcard.css';
 import '../styles/pdf-viewer.css';
 import '../styles/podcast.css';
+import '../styles/document-view.css';
+import '../styles/ai-agent.css';
 
 const DocumentView = () => {
   const { id: fileId } = useParams();
@@ -22,12 +25,14 @@ const DocumentView = () => {
   const [showQuiz, setShowQuiz] = useState(false);
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [showPodcast, setShowPodcast] = useState(false);
+  const [showAIAgent, setShowAIAgent] = useState(false);
+  const [aiAgentMinimized, setAiAgentMinimized] = useState(false);
 
   // Fetch PDF data when component mounts
   useEffect(() => {
     const fetchPdfData = async () => {
       try {
-        const apiUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001/api';
+        const apiUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
         const response = await fetch(`${apiUrl}/document/${fileId}`);
         if (response.ok) {
           const data = await response.json();
@@ -48,6 +53,38 @@ const DocumentView = () => {
     };
 
     fetchPdfData();
+  }, [fileId]);
+
+  // Listen for AI agent actions
+  useEffect(() => {
+    const handleAIAgentAction = (event) => {
+      const { action, documentId } = event.detail;
+      if (documentId === fileId) {
+        switch (action) {
+          case 'summary':
+            setTab('summary');
+            handleGenerate();
+            break;
+          case 'flashcards':
+            setTab('flashcards');
+            setShowFlashcards(true);
+            break;
+          case 'quiz':
+            setTab('quiz');
+            setShowQuiz(true);
+            break;
+          case 'podcast':
+            setTab('podcast');
+            setShowPodcast(true);
+            break;
+        }
+      }
+    };
+
+    window.addEventListener('ai-agent-action', handleAIAgentAction);
+    return () => {
+      window.removeEventListener('ai-agent-action', handleAIAgentAction);
+    };
   }, [fileId]);
 
   const handleGenerate = async () => {
@@ -106,25 +143,45 @@ const DocumentView = () => {
   };
 
   return (
-    <div className="flex h-screen">
-      <div className="w-4/5 border-r overflow-hidden">
+    <div className="flex h-screen bg-gray-100">
+      {/* PDF Section - Full Left Half */}
+      <div className="w-1/2 flex flex-col border-r-2 border-gray-300">
         <PDFViewer pdfData={pdfData} fileId={fileId} />
       </div>
       
-      <div className="w-1/5 p-4">
-        <div className="flex space-x-2 mb-4">
-          {['chat', 'summary', 'flashcards', 'quiz', 'podcast'].map(t => (
+      {/* Activities Section - Full Right Half */}
+      <div className="w-1/2 flex flex-col bg-white">
+        {/* Header Section */}
+        <div className="flex-none p-4 border-b border-gray-200 bg-white">
+          <h2 className="text-lg font-semibold text-gray-800 mb-3">Educational Tools</h2>
+          <div className="tab-buttons-container">
+            {['chat', 'summary', 'flashcards', 'quiz', 'podcast'].map(t => (
+              <button 
+                key={t} 
+                className={`${
+                  tab === t 
+                    ? 'active' 
+                    : 'inactive'
+                }`} 
+                onClick={() => setTab(t)}
+              >
+                {t.charAt(0).toUpperCase() + t.slice(1)}
+              </button>
+            ))}
+            
+            {/* AI Agent Button */}
             <button 
-              key={t} 
-              className={`px-4 py-2 rounded ${tab === t ? 'bg-blue-500 text-white' : 'bg-gray-200'}`} 
-              onClick={() => setTab(t)}
+              className="ai-agent-toggle-btn"
+              onClick={() => setShowAIAgent(true)}
+              title="Open AI Learning Assistant"
             >
-              {t.charAt(0).toUpperCase() + t.slice(1)}
+              🤖 AI Assistant
             </button>
-          ))}
+          </div>
         </div>
-        
-        <div>
+
+        {/* Content Section - Scrollable */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {tab === 'quiz' && showQuiz ? (
             <div className="quiz-wrapper">
               <Quiz 
@@ -159,7 +216,7 @@ const DocumentView = () => {
             <>
               {tab === 'chat' && (
                 <textarea 
-                  className="w-full h-32 border mb-2" 
+                  className="chat-textarea" 
                   placeholder="Ask a question about the PDF content..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -167,52 +224,108 @@ const DocumentView = () => {
               )}
               
               {tab === 'flashcards' && !showFlashcards && (
-                <div className="mb-2 p-2 border rounded bg-gray-50">
-                  <p className="text-xs text-gray-600">
+                <div className="mb-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
+                  <h3 className="font-semibold text-blue-800 mb-2">📚 Flashcards</h3>
+                  <p className="text-sm text-blue-700">
                     Click Generate to start an interactive flashcard session from your PDF content
                   </p>
                 </div>
               )}
 
               {(tab === 'summary') && (
-                <div className="mb-2 p-2 border rounded bg-gray-50">
-                  <p className="text-xs text-gray-600">
-                    Click Generate to create {tab} from your PDF content
+                <div className="mb-4 p-4 border border-green-200 rounded-lg bg-green-50">
+                  <h3 className="font-semibold text-green-800 mb-2">📄 Summary</h3>
+                  <p className="text-sm text-green-700">
+                    Click Generate to create a comprehensive summary from your PDF content
                   </p>
                 </div>
               )}
 
               {tab === 'quiz' && !showQuiz && (
-                <div className="mb-2 p-2 border rounded bg-gray-50">
-                  <p className="text-xs text-gray-600">
+                <div className="mb-4 p-4 border border-purple-200 rounded-lg bg-purple-50">
+                  <h3 className="font-semibold text-purple-800 mb-2">🧠 Quiz</h3>
+                  <p className="text-sm text-purple-700">
                     Click Generate to create an interactive quiz from your PDF content
                   </p>
                 </div>
               )}
 
               {tab === 'podcast' && !showPodcast && (
-                <div className="mb-2 p-2 border rounded bg-gray-50">
-                  <p className="text-xs text-gray-600">
+                <div className="mb-4 p-4 border border-orange-200 rounded-lg bg-orange-50">
+                  <h3 className="font-semibold text-orange-800 mb-2">🎧 Podcast</h3>
+                  <p className="text-sm text-orange-700">
                     Click Generate to create an interactive podcast with synchronized PDF viewing from your document
                   </p>
                 </div>
               )}
               
               <button 
-                className={`px-4 py-2 rounded text-white ${loading ? 'bg-gray-400' : 'bg-blue-500'}`}
+                className={`generate-button ${loading ? 'loading' : 'active'}`}
                 onClick={handleGenerate}
                 disabled={loading}
               >
-                {loading ? 'Generating...' : 'Generate'}
+                {loading ? 'Generating...' : `Generate ${tab.charAt(0).toUpperCase() + tab.slice(1)}`}
               </button>
               
-              <div className="mt-4 p-2 border rounded bg-gray-50 min-h-[200px] whitespace-pre-wrap">
-                {result || 'Results will appear here...'}
+              <div className="results-container">
+                <h3 className="results-header">Results</h3>
+                <div className="results-content">
+                  {result || 'Results will appear here...'}
+                </div>
               </div>
             </>
           )}
         </div>
       </div>
+      
+      {/* Overlay Components */}
+      {showQuiz && (
+        <div className="overlay">
+          <Quiz 
+            documentId={fileId} 
+            onClose={() => setShowQuiz(false)} 
+          />
+        </div>
+      )}
+      
+      {showFlashcards && (
+        <div className="overlay">
+          <Flashcard 
+            documentId={fileId} 
+            onClose={() => setShowFlashcards(false)} 
+          />
+        </div>
+      )}
+      
+      {showPodcast && (
+        <div className="overlay">
+          <PodcastPlayer 
+            documentId={fileId} 
+            onClose={() => setShowPodcast(false)} 
+          />
+        </div>
+      )}
+      
+      {/* AI Agent */}
+      {(showAIAgent || aiAgentMinimized) && (
+        <div className={`ai-agent-overlay ${aiAgentMinimized ? 'minimized' : ''}`}>
+          <AIAgent 
+            documentId={fileId}
+            pdfData={pdfData}
+            onClose={() => {
+              setShowAIAgent(false);
+              setAiAgentMinimized(false);
+            }}
+            isMinimized={aiAgentMinimized}
+            onToggleMinimize={() => {
+              setAiAgentMinimized(!aiAgentMinimized);
+              if (aiAgentMinimized) {
+                setShowAIAgent(true);
+              }
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

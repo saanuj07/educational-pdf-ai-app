@@ -47,16 +47,47 @@ exports.generateFlashcards = async (req, res) => {
       }
     }
 
-    // Fallback to simple sentence-based flashcards
+    // Fallback to content-specific sentence-based flashcards
     if (!useNLU || !nluService.initialized || flashcards.length === 0) {
-      console.log(`[FLASHCARDS-INFO] Using simple sentence-based generation...`);
+      console.log(`[FLASHCARDS-INFO] Using content-specific generation from PDF text...`);
+      
+      // Extract meaningful content from the PDF
       const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 20);
-      flashcards = sentences.slice(0, count).map((sentence, index) => ({
+      const keyPhrases = extractKeyPhrasesFromText(text);
+      const importantTerms = extractImportantTerms(text);
+      
+      // Generate flashcards from key phrases
+      const phraseCards = keyPhrases.slice(0, Math.ceil(count/2)).map((phrase, index) => ({
         id: index + 1,
-        question: `What is the main idea of: "${sentence.trim().substring(0, 50)}..."?`,
-        answer: sentence.trim(),
-        type: 'sentence-based'
+        question: `What does the document say about: "${phrase.split(' ').slice(0, 4).join(' ')}..."?`,
+        answer: findContextForPhrase(text, phrase),
+        type: 'key-phrase-based',
+        source: 'content-analysis'
       }));
+      
+      // Generate flashcards from important terms  
+      const termCards = importantTerms.slice(0, count - phraseCards.length).map((term, index) => ({
+        id: phraseCards.length + index + 1,
+        question: `Define or explain "${term}" as mentioned in the document.`,
+        answer: findContextForKeyword(text, term),
+        type: 'term-based',
+        source: 'content-analysis'
+      }));
+      
+      flashcards = [...phraseCards, ...termCards];
+      
+      // If still not enough, fill with sentence-based cards
+      if (flashcards.length < count) {
+        const remainingCount = count - flashcards.length;
+        const sentenceCards = sentences.slice(0, remainingCount).map((sentence, index) => ({
+          id: flashcards.length + index + 1,
+          question: `What is the main point of: "${sentence.trim().substring(0, 50)}..."?`,
+          answer: sentence.trim(),
+          type: 'sentence-based',
+          source: 'content-analysis'
+        }));
+        flashcards = [...flashcards, ...sentenceCards];
+      }
     }
 
     const duration = Date.now() - startTime;
@@ -82,6 +113,66 @@ exports.generateFlashcards = async (req, res) => {
     res.status(500).json({ error: 'Failed to generate flashcards' });
   }
 };
+
+// Extract key phrases from text (lines with bullets, colons, or special formatting)
+function extractKeyPhrasesFromText(text) {
+  const phrases = [];
+  const lines = text.split('\n');
+  
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    // Look for bullet points, numbered lists, or lines with colons
+    if (trimmed.match(/^[•\-\*\d+\.].+/) || trimmed.includes(':') && trimmed.length < 100) {
+      phrases.push(trimmed.replace(/^[•\-\*\d+\.]\s*/, ''));
+    }
+  });
+  
+  return phrases.slice(0, 10); // Return top 10 key phrases
+}
+
+// Extract important terms (words that appear frequently and are longer)
+function extractImportantTerms(text) {
+  const words = text.toLowerCase().split(/\W+/);
+  const wordCount = {};
+  
+  // Count word frequencies for words longer than 4 characters
+  words.forEach(word => {
+    if (word.length > 4 && !isCommonWord(word)) {
+      wordCount[word] = (wordCount[word] || 0) + 1;
+    }
+  });
+  
+  // Sort by frequency and return top terms
+  return Object.entries(wordCount)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 10)
+    .map(([word]) => word);
+}
+
+// Check if a word is a common word that shouldn't be considered important
+function isCommonWord(word) {
+  const commonWords = ['that', 'this', 'with', 'from', 'they', 'been', 'have', 'were', 'said', 'each', 'which', 'their', 'time', 'will', 'about', 'would', 'there', 'could', 'other', 'after', 'first', 'well', 'many', 'very', 'when', 'much', 'before', 'right', 'through', 'just', 'where', 'most', 'should', 'being'];
+  return commonWords.includes(word);
+}
+
+// Find context for a phrase (look for the sentence or paragraph containing it)
+function findContextForPhrase(text, phrase) {
+  const sentences = text.split(/[.!?]+/);
+  const phraseLower = phrase.toLowerCase();
+  
+  // Find sentence containing part of the phrase
+  const contextSentence = sentences.find(sentence => {
+    const sentenceLower = sentence.toLowerCase();
+    const phraseWords = phraseLower.split(' ').slice(0, 3); // First 3 words
+    return phraseWords.some(word => sentenceLower.includes(word));
+  });
+  
+  if (contextSentence) {
+    return contextSentence.trim();
+  }
+  
+  return phrase; // Return the phrase itself if no context found
+}
 
 // Helper function to find context for a keyword
 function findContextForKeyword(text, keyword) {

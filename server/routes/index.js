@@ -7,7 +7,14 @@ const flashcards = require('./flashcards');
 const quiz = require('./quiz');
 const podcast = require('./podcast');
 const chat = require('./chat');
+const aiAgent = require('./ai-agent');
 const localStorage = require('../utils/localStorage');
+
+// AI Agent test route (moved to top for testing)
+router.get('/ai-agent/test', (req, res) => {
+  console.log('🤖 AI Agent test route hit!');
+  res.json({ message: 'AI Agent route is working!', timestamp: new Date().toISOString() });
+});
 
 // Route to download PDF file
 router.get('/download/:id', (req, res) => {
@@ -155,6 +162,32 @@ router.use('/quiz', quiz);
 router.use('/generate-podcast', podcast);
 router.use('/chat', chat);
 
+// AI Agent test route
+router.get('/ai-agent/test', (req, res) => {
+  res.json({ message: 'AI Agent route is working!', timestamp: new Date().toISOString() });
+});
+
+// AI Agent chat route (simplified for testing)
+router.post('/ai-agent/chat', (req, res) => {
+  const { message, documentId, personality, mode } = req.body;
+  
+  // Simple fallback response for testing
+  const response = {
+    message: `Hello! You said: "${message}". I'm your AI assistant in ${personality || 'helpful'} mode. I'm currently using fallback responses while we debug the integration.`,
+    confidence: 0.8,
+    suggestions: ['Tell me more', 'Explain this topic', 'Create a summary'],
+    actions: [],
+    personality: personality || 'helpful',
+    mode: mode || 'chat',
+    timestamp: new Date().toISOString()
+  };
+  
+  res.json(response);
+});
+
+// AI Agent routes (commenting out for now to test direct routes)
+// router.use('/ai-agent', aiAgent);
+
 // Audio file serving route
 router.get('/audio/:filename', (req, res) => {
   try {
@@ -203,7 +236,8 @@ console.log('📁 All routes loaded:', {
   flashcards: '/api/generate-flashcards', 
   quiz: '/api/quiz',
   podcast: '/api/generate-podcast',
-  chat: '/api/chat'
+  chat: '/api/chat',
+  aiAgent: '/api/ai-agent'
 });
 
 module.exports = router;

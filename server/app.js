@@ -6,6 +6,7 @@ const routes = require('./routes');
 const cors = require('cors');
 const multer = require('multer');
 const localStorage = require('./utils/localStorage');
+const path = require('path');
 
 const app = express();
 
@@ -17,15 +18,43 @@ const upload = multer({
   }
 });
 
-// CORS configuration
+// CORS configuration - allow multiple frontend ports for development
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow localhost on any port for development
+    if (origin.startsWith('http://localhost:')) {
+      return callback(null, true);
+    }
+    
+    // Allow the specific configured origin
+    const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
+    if (origin === allowedOrigin) {
+      return callback(null, true);
+    }
+    
+    // In production, allow Render URLs
+    if (process.env.NODE_ENV === 'production' && origin && origin.includes('render.com')) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 };
 
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(morgan('combined', { stream: winston.stream }));
+
+// Serve static files from React build in production
+if (process.env.NODE_ENV === 'production') {
+  const buildPath = path.join(__dirname, '../client/build');
+  app.use(express.static(buildPath));
+  console.log(`📦 Serving static files from: ${buildPath}`);
+}
 
 // File upload endpoint
 app.post('/api/upload', upload.single('pdf'), async (req, res) => {
@@ -101,6 +130,47 @@ app.get('/', (req, res) => {
 
 app.use('/api', routes);
 
+// Health check endpoint for Render monitoring
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    uptime: process.uptime()
+  });
+});
+
+// Simple test route for debugging
+app.get('/test', (req, res) => {
+  res.json({ message: 'Simple test route works!' });
+});
+
+app.use('/api/ai-agent', require('./routes/ai-agent'));
+
+// Direct AI agent test route for debugging
+app.get('/api/ai-agent-direct/test', (req, res) => {
+  console.log('🤖 Direct AI Agent test route hit!');
+  res.json({ message: 'Direct AI Agent route is working!', timestamp: new Date().toISOString() });
+});
+
+app.post('/api/ai-agent-direct/chat', (req, res) => {
+  console.log('🤖 Direct AI Agent chat route hit!', req.body);
+  const { message, documentId, personality, mode } = req.body;
+  
+  const response = {
+    message: `Hello! You said: "${message}". I'm your AI assistant in ${personality || 'helpful'} mode.`,
+    confidence: 0.8,
+    suggestions: ['Tell me more', 'Explain this topic', 'Create a summary'],
+    actions: [],
+    personality: personality || 'helpful',
+    mode: mode || 'chat',
+    timestamp: new Date().toISOString()
+  };
+  
+  res.json(response);
+});
+
 // Serve audio files
 app.get('/api/audio/:filename', (req, res) => {
   const ttsService = require('./services/textToSpeechService');
@@ -119,5 +189,12 @@ app.use((err, req, res, next) => {
   winston.error(err.stack);
   res.status(500).json({ error: 'Internal Server Error' });
 });
+
+// Catch-all handler: send back React's index.html file in production
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+  });
+}
 
 module.exports = app;

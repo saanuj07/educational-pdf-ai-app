@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
 
 // Enhanced error handling with detailed logging
 const handleApiError = async (response, endpoint) => {
@@ -161,7 +161,7 @@ export const generateQuiz = async (fileId) => {
     if (error.name === 'TimeoutError') {
       throw new Error('QUIZ_TIMEOUT: Quiz generation timed out. The document might be too large or the server is busy. Please try again.');
     } else if (error.message.includes('Failed to fetch')) {
-      throw new Error('QUIZ_CONNECTION: Cannot connect to quiz service. Please check if the backend server is running on port 5001.');
+      throw new Error('QUIZ_CONNECTION: Cannot connect to quiz service. Please check if the backend server is running on port 5000.');
     } else if (error.message.includes('QUIZ_')) {
       throw error; // Re-throw quiz-specific errors with error codes
     }

@@ -3,12 +3,19 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
   },
   "dependencies": {
+    "@ibm-cloud/watsonx-ai": "^1.6.10",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "ibm-cloud-sdk-core": "^5.4.2",
     "ibm-watson": "^11.0.0",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",

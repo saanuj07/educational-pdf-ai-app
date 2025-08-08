@@ -1,0 +1,36 @@
+services:
+  # Web Service - Node.js Backend + Serve React Frontend
+  - type: web
+    name: educational-pdf-ai-app
+    env: node
+    repo: https://github.com/saanuj07/educational-pdf-ai-app.git
+    branch: main
+    buildCommand: npm install && npm run build:production
+    startCommand: npm start
+    plan: free
+    region: oregon
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: WATSON_API_KEY
+        sync: false
+      - key: WATSON_URL
+        value: https://eu-de.ml.cloud.ibm.com
+      - key: WATSON_MODEL_ID
+        value: ibm/granite-13b-instruct-v2
+      - key: WATSON_SPACE_ID
+        sync: false
+      - key: WATSON_NLU_API_KEY
+        sync: false
+      - key: WATSON_NLU_URL
+        value: https://api.au-syd.natural-language-understanding.watson.cloud.ibm.com/instances/df01479b-7f1a-4bb1-94a0-31fba30b4ddb
+      - key: WATSON_TTS_API_KEY
+        sync: false
+      - key: WATSON_TTS_URL
+        value: https://api.au-syd.text-to-speech.watson.cloud.ibm.com/instances/aa4d07d9-b424-4dc1-8eb6-9c03b408604e
+      - key: WATSON_STT_API_KEY
+        sync: false
+      - key: WATSON_STT_URL
+        value: https://api.au-syd.speech-to-text.watson.cloud.ibm.com/instances/ac7014b0-33e6-42c7-977c-04a4f1722119
