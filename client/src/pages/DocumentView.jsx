@@ -282,7 +282,7 @@ const DocumentView = () => {
       {showQuiz && (
         <div className="overlay">
           <Quiz 
-            documentId={fileId} 
+            fileId={fileId}
             onClose={() => setShowQuiz(false)} 
           />
         </div>

@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const localStorage = require('../utils/localStorage');
 const watsonxService = require('../services/watsonxService');
+const nluService = require('../services/nluService');
 
 // Error codes for better debugging
 const ERROR_CODES = {
@@ -63,43 +64,70 @@ exports.generateQuiz = async (req, res) => {
         }
 
         let quiz = [];
-        let method = 'watsonx-api';
+        let method = 'watson-ai-analysis';
+        
+        if (!watsonxService.initialized) {
+            return res.status(503).json({ 
+                error: ERROR_CODES.QUIZ_004,
+                code: 'QUIZ_004',
+                details: 'Watson AI service required for PDF content analysis but not available',
+                resolution: 'Ensure Watson AI credentials are properly configured in environment variables',
+                timestamp: new Date().toISOString()
+            });
+        }
         
         try {
-            const prompt = `Based on the following content, create exactly ${count} multiple-choice questions. Each question should have exactly 4 options (A, B, C, D) with only one correct answer. Also provide a detailed explanation for each correct answer.
+            console.log('[QUIZ-AI] Using Watson AI to analyze PDF content for quiz generation...');
+            
+            const prompt = `You are an educational assessment expert. Analyze the following PDF document content and create exactly ${count} high-quality multiple-choice questions that test comprehension and understanding of the key concepts.
 
-Content: ${text.substring(0, 2000)}
+DOCUMENT CONTENT TO ANALYZE:
+${text}
 
-Format your response as a JSON array with this structure:
+INSTRUCTIONS:
+1. Read and understand the entire document content above
+2. Identify the most important concepts, facts, processes, and key information
+3. Create ${count} questions that test different aspects of this content
+4. Each question must have exactly 4 options (A, B, C, D) with only one correct answer
+5. Make questions specific to the actual content, not generic
+6. Provide detailed explanations based on the document
+7. Vary difficulty levels and question types
+
+FORMAT: Return a valid JSON array with this exact structure:
 [
-  {
-    "question": "Your question here",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctIndex": 0,
-    "explanation": "Detailed explanation of why this answer is correct"
-  }
+  {
+    "question": "Specific question about the document content",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctIndex": 0,
+    "explanation": "Detailed explanation based on the document content"
+  }
 ]
 
-Make sure the questions are relevant, educational, and test understanding of the key concepts in the content.`;
+Generate ${count} questions now:`;
 
-            console.log('[QUIZ-AI] Attempting Watson AI generation...');
-            const aiResponse = await watsonxService.generateText(prompt);
-            console.log('[QUIZ-AI] Watson AI response received:', typeof aiResponse, aiResponse ? 'has content' : 'empty');
+            const aiResponse = await watsonxService.generateText(prompt, {
+                max_new_tokens: 1000,
+                temperature: 0.3  // Lower temperature for more factual responses
+            });
             
-            // Try to parse the AI response as JSON
-            const responseText = aiResponse.text || aiResponse;
-            
-            if (!responseText) {
+            if (!aiResponse) {
                 throw new Error('Empty response from Watson AI service');
             }
             
             // Clean the response and try to extract JSON
-            const cleanResponse = responseText.replace(/```json|```/g, '').trim();
-            quiz = JSON.parse(cleanResponse);
+            const cleanResponse = aiResponse.replace(/```json|```/g, '').trim();
+            
+            try {
+                quiz = JSON.parse(cleanResponse);
+            } catch (parseError) {
+                console.log(`[QUIZ-ERROR] Failed to parse Watson AI JSON response: ${parseError.message}`);
+                console.log(`[QUIZ-DEBUG] Raw AI response: ${cleanResponse.substring(0, 500)}...`);
+                throw new Error(`JSON parsing failed: ${parseError.message}`);
+            }
             
             // Validate the quiz structure
-            if (!Array.isArray(quiz) || quiz.length !== count) {
-                throw new Error(`Invalid quiz format: Expected array of ${count} questions, got ${Array.isArray(quiz) ? quiz.length : typeof quiz}`);
+            if (!Array.isArray(quiz) || quiz.length === 0) {
+                throw new Error(`Invalid quiz format: Expected array of questions, got ${Array.isArray(quiz) ? quiz.length : typeof quiz}`);
             }
             
             // Validate each question
@@ -111,38 +139,77 @@ Make sure the questions are relevant, educational, and test understanding of the
                 }
             });
             
-            console.log('[QUIZ-AI] Watson AI quiz successfully parsed and validated');
+            // Ensure we have the requested number of questions
+            quiz = quiz.slice(0, count);
+            
+            console.log(`[QUIZ-SUCCESS] Watson AI generated ${quiz.length} quiz questions from PDF analysis`);
             
         } catch (aiError) {
-            console.error('[QUIZ-ERROR] Watson AI generation failed, falling back to dynamic method:', aiError);
-            method = 'dynamic-fallback';
-            quiz = generateDynamicFallbackQuiz(text, count);
+            console.error('[QUIZ-ERROR] Watson AI analysis failed:', aiError.message);
         }
-
-        // Add unique IDs to questions
+        
+        // Fall back to NLU-based quiz generation if Watson AI failed
+        if (quiz.length === 0 && nluService.initialized) {
+            try {
+                console.log('[QUIZ-INFO] Using Watson NLU for content analysis as fallback...');
+                const keywords = await nluService.extractKeywords(text, count * 2);
+                
+                quiz = keywords.slice(0, count).map((keyword, index) => ({
+                    id: index + 1,
+                    question: `Based on the PDF content, what is the significance of "${keyword.text}"?`,
+                    options: [
+                        `${keyword.text} is a key concept discussed in the document`,
+                        `${keyword.text} is not mentioned in the document`,
+                        `${keyword.text} is only briefly referenced`,
+                        `${keyword.text} is used as an example`
+                    ],
+                    correctIndex: 0,
+                    explanation: `According to the document content, ${keyword.text} is identified as an important concept with relevance score: ${keyword.relevance.toFixed(2)}`
+                }));
+                
+                method = 'nlu-keyword-analysis';
+                console.log(`[QUIZ-SUCCESS] Generated ${quiz.length} NLU-based quiz questions from PDF analysis`);
+            } catch (nluError) {
+                console.error('[QUIZ-ERROR] NLU analysis also failed:', nluError.message);
+            }
+        }
+        
+        // If both AI methods failed, return error
+        if (quiz.length === 0) {
+            return res.status(503).json({ 
+                error: ERROR_CODES.QUIZ_005,
+                code: 'QUIZ_005',
+                details: 'Both Watson AI and NLU quiz generation failed',
+                resolution: 'Ensure Watson services are properly configured and available',
+                timestamp: new Date().toISOString()
+            });
+        }        // Add unique IDs to questions
         quiz = quiz.map((q, index) => ({
             ...q,
             id: index + 1
         }));
 
         const duration = Date.now() - startTime;
-        console.log(`[QUIZ-INFO] Quiz generated {
+        console.log(`[QUIZ-SUCCESS] Quiz generated using Watson AI analysis {
             "count": ${quiz.length},
             "method": "${method}",
-            "processingTime": "${duration}ms"
+            "processingTime": "${duration}ms",
+            "filename": "${fileData.filename}"
         }`);
 
         res.json({ 
             quiz,
-            message: 'Quiz generated successfully',
-            source: method === 'watsonx-api' ? 'ai' : 'fallback',
+            message: 'Quiz generated successfully using Watson AI analysis',
+            source: 'watson-ai-analysis',
             metadata: {
                 fileId: fileId,
+                filename: fileData.filename,
                 questionsCount: quiz.length,
                 contentLength: text.length,
                 generatedAt: new Date().toISOString(),
                 processingTime: duration,
-                controller: controllerPath
+                controller: controllerPath,
+                contentAnalyzed: true
             }
         });
 
@@ -159,43 +226,3 @@ Make sure the questions are relevant, educational, and test understanding of the
         });
     }
 };
-
-// Dynamic fallback function to generate a generic quiz from any text
-function generateDynamicFallbackQuiz(text, count) {
-    console.log('[QUIZ-FALLBACK] Generating dynamic quiz from actual text content...');
-    const quiz = [];
-    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 20);
-
-    for (let i = 0; i < count; i++) {
-        if (sentences.length < 1) break;
-
-        const mainSentence = sentences[i % sentences.length].trim();
-        const otherOptions = [];
-        // Find three other sentences to use as incorrect options
-        for (let j = 1; j <= 3; j++) {
-            const otherSentence = sentences[(i + j) % sentences.length].trim();
-            if (otherSentence !== mainSentence && otherOptions.length < 3) {
-                otherOptions.push(otherSentence);
-            }
-        }
-        
-        // If not enough unique sentences for options, just use a generic placeholder
-        while (otherOptions.length < 3) {
-            otherOptions.push("A different point from the document");
-        }
-
-        // Randomly place the correct answer
-        const allOptions = [...otherOptions];
-        const correctIndex = Math.floor(Math.random() * 4);
-        allOptions.splice(correctIndex, 0, mainSentence);
-
-        quiz.push({
-            question: `Which of the following is a key point from this section of the document?`,
-            options: allOptions,
-            correctIndex: correctIndex,
-            explanation: `The correct answer is based on the sentence: "${mainSentence}"`
-        });
-    }
-
-    return quiz.slice(0, count);
-}

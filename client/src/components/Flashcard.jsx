@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/flashcard.css';
+import { generateFlashcards as apiGenerateFlashcards } from '../services/api';
 
 const Flashcard = ({ documentId, onClose }) => {
   const [flashcards, setFlashcards] = useState([]);
@@ -16,58 +17,9 @@ const Flashcard = ({ documentId, onClose }) => {
     easy: 0
   });
 
-  // Sample flashcards as fallback
-  const sampleFlashcards = [
-    {
-      id: 1,
-      front: "What are the main design principles mentioned in this document?",
-      back: "Lightweight, premium materials with aluminum unibody construction for better portability and durability."
-    },
-    {
-      id: 2,
-      front: "What is the weight specification mentioned for portability?",
-      back: "As low as 1.24 kg for MacBook Air, making it easy to carry around."
-    },
-    {
-      id: 3,
-      front: "How is the design aesthetic described?",
-      back: "Minimalist look with clean design and few visible ports, emphasizing simplicity and elegance."
-    },
-    {
-      id: 4,
-      front: "What material is primarily used in construction?",
-      back: "Aluminum unibody construction as a key design feature for premium quality."
-    },
-    {
-      id: 5,
-      front: "What are the key benefits of the design approach?",
-      back: "Lightweight, premium, and durable construction that enhances user experience."
-    },
-    {
-      id: 6,
-      front: "What does the thin and lightweight feature emphasize?",
-      back: "Easy portability and user convenience for mobile professionals and students."
-    },
-    {
-      id: 7,
-      front: "How does the minimalist design benefit users?",
-      back: "Reduces visual clutter and complexity, creating a more focused and elegant user experience."
-    },
-    {
-      id: 8,
-      front: "What type of user experience does the design prioritize?",
-      back: "Premium, professional experience with emphasis on quality and attention to detail."
-    },
-    {
-      id: 9,
-      front: "Why is aluminum chosen as the primary material?",
-      back: "Aluminum provides optimal balance of strength, lightness, and premium appearance for professional devices."
-    },
-    {
-      id: 10,
-      front: "What is the overall design philosophy demonstrated?",
-      back: "Form follows function with emphasis on user-centric design, quality materials, and thoughtful engineering."
-    }
+  // Minimal fallback (non-themed) used only if API call fails
+  const fallbackFlashcards = [
+    { id: 1, front: 'Fallback flashcard (AI unavailable). Upload or retry.', back: 'Flashcard data could not be generated from the document.' }
   ];
 
   useEffect(() => {
@@ -77,17 +29,25 @@ const Flashcard = ({ documentId, onClose }) => {
   const generateFlashcards = async () => {
     setIsLoading(true);
     setError(null);
-    
     try {
-      // For now, use sample flashcards with random order
-      const shuffledCards = [...sampleFlashcards].sort(() => Math.random() - 0.5);
-      
-      setFlashcards(shuffledCards);
-      setSessionStats(prev => ({ ...prev, total: shuffledCards.length }));
-      setIsLoading(false);
+      if (!documentId) throw new Error('Missing documentId for flashcard generation');
+      const data = await apiGenerateFlashcards(documentId);
+      if (!data.flashcards || data.flashcards.length === 0) {
+        throw new Error('Empty flashcard list returned from API');
+      }
+      const normalized = data.flashcards.map((c, i) => ({
+        id: c.id || i + 1,
+        front: c.question || c.front || 'Question unavailable',
+        back: c.answer || c.back || 'Answer unavailable'
+      }));
+      setFlashcards(normalized);
+      setSessionStats(prev => ({ ...prev, total: normalized.length }));
     } catch (err) {
-      console.error('Error generating flashcards:', err);
-      setError('Failed to generate flashcards. Please try again.');
+      console.error('[FLASHCARDS-FRONTEND] Failed to load flashcards:', err.message);
+      setError('Flashcard generation unavailable (AI or server issue). Showing minimal fallback.');
+      setFlashcards(fallbackFlashcards);
+      setSessionStats(prev => ({ ...prev, total: fallbackFlashcards.length }));
+    } finally {
       setIsLoading(false);
     }
   };
@@ -169,20 +129,7 @@ const Flashcard = ({ documentId, onClose }) => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flashcard-container">
-        <div className="flashcard-header">
-          <h2>🃏 Flashcard Session</h2>
-          <button onClick={onClose} className="close-btn">✕</button>
-        </div>
-        <div className="flashcard-error">
-          <p>{error}</p>
-          <button onClick={generateFlashcards} className="btn-primary">Try Again</button>
-        </div>
-      </div>
-    );
-  }
+  // We keep rendering even if error, showing fallback deck + banner
 
   // Session completion screen
   if (currentIndex === -1) {
@@ -237,6 +184,7 @@ const Flashcard = ({ documentId, onClose }) => {
     <div className="flashcard-container">
       <div className="flashcard-header">
         <h2>🃏 Flashcard Session</h2>
+        {error && <div className="flashcard-error-banner">{error}</div>}
         <div className="session-progress">
           <span>{currentIndex + 1} / {flashcards.length}</span>
           <div className="progress-bar">

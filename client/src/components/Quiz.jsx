@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { generateQuiz as apiGenerateQuiz } from '../services/api';
 
-const Quiz = ({ fileId, onClose }) => {
+const Quiz = ({ fileId, documentId, onClose }) => {
+  const resolvedFileId = fileId || documentId;
   const [questions, setQuestions] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
@@ -10,65 +12,14 @@ const Quiz = ({ fileId, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Sample quiz data - in real implementation, this would come from Watson AI
-  const sampleQuizData = [
+  // Minimal fallback only if API unavailable; no hardcoded brand/device specifics
+  const fallbackQuizData = [
     {
       id: 1,
-      question: "What is the significance of the MacBook Air being as light as 1.24 kg?",
-      options: [
-        "It makes the laptop easy to carry and portable",
-        "It allows for faster processing speeds", 
-        "It enhances the laptop's battery life",
-        "It improves the screen resolution significantly"
-      ],
+      question: 'Fallback: Example question (AI unavailable). Please retry after confirming backend.',
+      options: ['Option A', 'Option B', 'Option C', 'Option D'],
       correctIndex: 0,
-      explanation: "The MacBook Air's weight of as low as 1.24 kg emphasizes its thin and lightweight design, which directly contributes to its portability and user convenience. This weight supports the design goal of easy transport."
-    },
-    {
-      id: 2,
-      question: "The aluminum unibody contributes to both the premium feel and durability of the MacBook Air.",
-      options: [
-        "True",
-        "False"
-      ],
-      correctIndex: 0,
-      explanation: "The aluminum unibody design not only provides a premium, high-quality feel but also enhances the structural integrity and durability of the MacBook Air, making it more resistant to wear and damage."
-    },
-    {
-      id: 3,
-      question: "Which design philosophy best describes the MacBook Air's approach?",
-      options: [
-        "Maximum performance regardless of size",
-        "Minimalist design with clean lines and few visible ports",
-        "Colorful and customizable appearance",
-        "Industrial and rugged construction"
-      ],
-      correctIndex: 1,
-      explanation: "The MacBook Air follows Apple's minimalist design philosophy, featuring clean lines, a sleek profile, and strategically placed ports that maintain the device's aesthetic appeal while providing necessary functionality."
-    },
-    {
-      id: 4,
-      question: "What makes the MacBook Air thin and lightweight compared to traditional laptops?",
-      options: [
-        "Smaller screen size",
-        "Reduced battery capacity",
-        "Advanced engineering and premium materials",
-        "Fewer internal components"
-      ],
-      correctIndex: 2,
-      explanation: "The MacBook Air's thin and lightweight profile is achieved through advanced engineering techniques, the use of premium materials like aluminum, and innovative internal component arrangement, not by compromising on essential features."
-    },
-    {
-      id: 5,
-      question: "The MacBook Air's design prioritizes which aspect for users?",
-      options: [
-        "Gaming performance",
-        "Portability and user convenience",
-        "Maximum storage capacity",
-        "Multimedia editing capabilities"
-      ],
-      correctIndex: 1,
-      explanation: "The MacBook Air's design philosophy centers around portability and user convenience, making it ideal for users who need a reliable, lightweight laptop for everyday tasks, travel, and productivity on the go."
+      explanation: 'Fallback data shown because the quiz API request failed.'
     }
   ];
 
@@ -79,35 +30,19 @@ const Quiz = ({ fileId, onClose }) => {
         setLoading(true);
         setError(null);
         
-        // Try to fetch from API first
-        const apiUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
-        const response = await fetch(`${apiUrl}/quiz/generate`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ fileId })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.quiz && data.quiz.length > 0) {
-            setQuestions(data.quiz);
-            setLoading(false);
-            return;
-          }
+  if (!resolvedFileId) {
+          throw new Error('Missing fileId for quiz generation');
         }
-        
-        // Fallback to sample data if API fails
-        console.log('Using sample quiz data as fallback');
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-        setQuestions(sampleQuizData);
+  const data = await apiGenerateQuiz(resolvedFileId);
+        if (!data.quiz || data.quiz.length === 0) {
+          throw new Error('Empty quiz returned from API');
+        }
+        setQuestions(data.quiz.map((q, i) => ({ ...q, id: q.id || i + 1 })));
         setLoading(false);
-        
       } catch (err) {
-        console.error('Error loading quiz:', err);
-        // Use sample data as fallback
-        setQuestions(sampleQuizData);
+        console.error('[QUIZ-FRONTEND] Failed to load quiz from API:', err.message);
+        setError('Quiz generation unavailable (AI or server issue). Showing minimal fallback.');
+        setQuestions(fallbackQuizData);
         setLoading(false);
       }
     };
@@ -159,16 +94,7 @@ const Quiz = ({ fileId, onClose }) => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="quiz-container">
-        <div className="quiz-error">
-          <p>{error}</p>
-          <button onClick={onClose} className="btn-secondary">Close</button>
-        </div>
-      </div>
-    );
-  }
+  // Show error banner but still render fallback quiz if available
 
   if (quizCompleted) {
     const percentage = Math.round((score / questions.length) * 100);
@@ -211,6 +137,11 @@ const Quiz = ({ fileId, onClose }) => {
     <div className="quiz-container">
       <div className="quiz-header">
         <h2>Interactive Quiz</h2>
+        {error && (
+          <div className="quiz-error-banner">
+            {error}
+          </div>
+        )}
         <div className="quiz-progress">
           <span>Question {currentQuestion + 1} of {questions.length}</span>
           <div className="progress-bar">
