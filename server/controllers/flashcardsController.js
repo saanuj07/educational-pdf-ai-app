@@ -1,12 +1,13 @@
 const localStorage = require('../utils/localStorage');
 const nluService = require('../services/nluService');
+const watsonxService = require('../services/watsonxService');
 
 exports.generateFlashcards = async (req, res) => {
   const startTime = Date.now();
   console.log(`[FLASHCARDS-INFO] API called: /api/generate-flashcards`);
   
   try {
-    const { fileId, count = 5, useNLU = true } = req.body;
+    const { fileId, count = 5, useWatsonAI = true } = req.body;
     
     const fileData = localStorage.getFileMetadata(fileId);
     if (!fileData) {
@@ -20,13 +21,59 @@ exports.generateFlashcards = async (req, res) => {
   "filename": "${fileData.filename}",
   "textLength": ${text.length},
   "count": ${count},
-  "useNLU": ${useNLU}
+  "useWatsonAI": ${useWatsonAI}
 }`);
 
     let flashcards = [];
 
-    // Use NLU for better keyword-based flashcards if available
-    if (useNLU && nluService.initialized) {
+    // Try Watson AI first for high-quality flashcards
+    if (useWatsonAI && watsonxService.initialized) {
+      try {
+        console.log(`[FLASHCARDS-INFO] Using Watson AI for flashcard generation...`);
+        
+        const prompt = `Based on the following content, create exactly ${count} educational flashcards. Each flashcard should have a clear question and a comprehensive answer that tests understanding of key concepts.
+
+Content: ${text.substring(0, 2000)}
+
+Format your response as a JSON array with this structure:
+[
+  {
+    "question": "Clear, specific question about a key concept",
+    "answer": "Detailed answer that explains the concept thoroughly",
+    "concept": "Main concept being tested",
+    "difficulty": "easy|medium|hard"
+  }
+]
+
+Make sure the flashcards cover different important topics from the content and vary in difficulty level.`;
+
+        const aiResponse = await watsonxService.generateText(prompt);
+        
+        if (aiResponse && typeof aiResponse === 'string') {
+          const cleanedResponse = aiResponse.replace(/```json|```/g, '').trim();
+          const parsedFlashcards = JSON.parse(cleanedResponse);
+          
+          if (Array.isArray(parsedFlashcards) && parsedFlashcards.length > 0) {
+            flashcards = parsedFlashcards.map((card, index) => ({
+              id: index + 1,
+              question: card.question || 'Sample question',
+              answer: card.answer || 'Sample answer',
+              concept: card.concept || 'General',
+              difficulty: card.difficulty || 'medium',
+              type: 'watson-ai-generated',
+              source: 'Watson AI'
+            }));
+            
+            console.log(`[FLASHCARDS-INFO] Generated ${flashcards.length} Watson AI flashcards`);
+          }
+        }
+      } catch (error) {
+        console.log(`[FLASHCARDS-WARNING] Watson AI generation failed, falling back: ${error.message}`);
+      }
+    }
+
+    // Fall back to NLU-based flashcards if Watson AI didn't work
+    if (flashcards.length === 0 && nluService.initialized) {
       try {
         console.log(`[FLASHCARDS-INFO] Using NLU for keyword extraction...`);
         const keywords = await nluService.extractKeywords(text, count * 2);
@@ -35,15 +82,16 @@ exports.generateFlashcards = async (req, res) => {
           id: index + 1,
           question: `What is the significance of "${keyword.text}" in this document?`,
           answer: findContextForKeyword(text, keyword.text),
-          keyword: keyword.text,
-          relevance: keyword.relevance,
-          type: 'keyword-based'
+          concept: keyword.text,
+          difficulty: 'medium',
+          type: 'nlu-keyword-based',
+          source: 'Watson NLU',
+          relevance: keyword.relevance
         }));
         
         console.log(`[FLASHCARDS-INFO] Generated ${flashcards.length} NLU-based flashcards`);
       } catch (error) {
-        console.log(`[FLASHCARDS-WARNING] NLU generation failed, falling back to simple method: ${error.message}`);
-        useNLU = false;
+        console.log(`[FLASHCARDS-WARNING] NLU generation failed, using content-based method: ${error.message}`);
       }
     }
 

@@ -1,215 +1,56 @@
+import axios from 'axios';
+
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
 
-// Enhanced error handling with detailed logging
-const handleApiError = async (response, endpoint) => {
-  const error = {
-    status: response.status,
-    statusText: response.statusText,
-    endpoint,
-    timestamp: new Date().toISOString()
-  };
-  
-  try {
-    const errorData = await response.json();
-    error.details = errorData;
-    
-    // Enhanced error logging for quiz errors with error codes
-    if (errorData.code && errorData.code.startsWith('QUIZ_')) {
-      console.error(`🚨 QUIZ ERROR [${errorData.code}]:`, {
-        message: errorData.error,
-        location: errorData.location,
-        details: errorData.details,
-        resolution: errorData.resolution,
-        timestamp: errorData.timestamp
-      });
-      
-      // Create user-friendly error message
-      const userMessage = `Quiz Error ${errorData.code}: ${errorData.details}. ${errorData.resolution}`;
-      throw new Error(userMessage);
-    }
-  } catch (e) {
-    if (e.message.includes('Quiz Error')) {
-      throw e; // Re-throw quiz errors with detailed messages
-    }
-    error.details = { message: 'Unable to parse error response' };
-  }
-  
-  console.error('🚨 API Error:', JSON.stringify(error, null, 2));
-  throw new Error(`API Error (${response.status}): ${error.details.message || response.statusText}`);
-};
+console.log('🔗 API Base URL:', API_BASE_URL);
 
-export const uploadPDF = async (file) => {
+// This function now correctly handles file uploads using FormData.
+export const uploadDocument = async (file) => {
+  const formData = new FormData();
+  formData.append('pdf', file);
+
   try {
-    const formData = new FormData();
-    formData.append('pdf', file);
-    
-    console.log('📤 Uploading PDF:', { 
-      filename: file.name, 
-      size: file.size,
-      apiUrl: `${API_BASE_URL}/upload`
-    });
-    
-    const response = await fetch(`${API_BASE_URL}/upload`, {
-      method: 'POST',
-      body: formData,
+    const response = await axios.post(`${API_BASE_URL}/upload`, formData, {
       headers: {
-        // Don't set Content-Type header for FormData - let browser set it with boundary
+        'Content-Type': 'multipart/form-data',
       },
-      // Add timeout and retry logic
-      signal: AbortSignal.timeout(30000) // 30 second timeout
     });
-    
-    if (!response.ok) {
-      await handleApiError(response, '/upload');
-    }
-    
-    const result = await response.json();
-    console.log('✅ Upload successful:', result);
-    return result;
+    return response.data;
   } catch (error) {
-    console.error('💥 Upload failed:', error);
-    
-    // Provide more specific error messages
-    if (error.name === 'TimeoutError') {
-      throw new Error('Upload timed out. Please try again.');
-    } else if (error.message.includes('Failed to fetch')) {
-      throw new Error('Cannot connect to server. Please check if the backend is running.');
+    console.error('Error in uploadDocument API call:', error);
+    if (error.response) {
+      throw new Error(`Server responded with status: ${error.response.status}`);
+    } else if (error.request) {
+      throw new Error('No response from server. Check network connection or server status.');
+    } else {
+      throw new Error('Error setting up the request.');
     }
-    
-    throw error;
   }
 };
 
+// This function is new and handles the podcast generation request.
+export const generatePodcast = async (fileId) => {
+  const response = await axios.post(`${API_BASE_URL}/generate-podcast`, { fileId });
+  return response.data;
+};
+
+// All other API functions
 export const generateSummary = async (fileId) => {
-  const response = await fetch(`${API_BASE_URL}/generate-summary`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fileId })
-  });
-  
-  if (!response.ok) {
-    throw new Error('Summary generation failed');
-  }
-  
-  return response.json();
-};
-
-export const generateFlashcards = async (fileId) => {
-  const response = await fetch(`${API_BASE_URL}/generate-flashcards`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fileId })
-  });
-  
-  if (!response.ok) {
-    throw new Error('Flashcard generation failed');
-  }
-  
-  return response.json();
-};
-
-export const chatWithPDF = async (fileId, question) => {
-  const response = await fetch(`${API_BASE_URL}/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fileId, question })
-  });
-  
-  if (!response.ok) {
-    throw new Error('Chat failed');
-  }
-  
-  return response.json();
+  const response = await axios.post(`${API_BASE_URL}/generate-summary`, { fileId });
+  return response.data;
 };
 
 export const generateQuiz = async (fileId) => {
-  try {
-    console.log('📊 Generating quiz for file:', fileId);
-    
-    if (!fileId) {
-      throw new Error('QUIZ_001: Missing fileId parameter. Please ensure a document is selected.');
-    }
-    
-    const response = await fetch(`${API_BASE_URL}/quiz/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fileId }),
-      signal: AbortSignal.timeout(30000) // 30 second timeout
-    });
-    
-    if (!response.ok) {
-      await handleApiError(response, '/quiz/generate');
-    }
-    
-    const result = await response.json();
-    
-    // Enhanced success logging
-    console.log('✅ Quiz generated successfully:', {
-      questionsCount: result.quiz?.length || 0,
-      source: result.source,
-      fileId: fileId,
-      controller: result.metadata?.controller,
-      timestamp: result.metadata?.generatedAt
-    });
-    
-    return result;
-    
-  } catch (error) {
-    console.error('🚨 Quiz generation failed:', error);
-    
-    // Provide more specific error messages based on error type
-    if (error.name === 'TimeoutError') {
-      throw new Error('QUIZ_TIMEOUT: Quiz generation timed out. The document might be too large or the server is busy. Please try again.');
-    } else if (error.message.includes('Failed to fetch')) {
-      throw new Error('QUIZ_CONNECTION: Cannot connect to quiz service. Please check if the backend server is running on port 5000.');
-    } else if (error.message.includes('QUIZ_')) {
-      throw error; // Re-throw quiz-specific errors with error codes
-    }
-    
-    throw new Error(`QUIZ_UNKNOWN: Unexpected error during quiz generation: ${error.message}`);
-  }
+  const response = await axios.post(`${API_BASE_URL}/quiz/generate`, { fileId });
+  return response.data;
 };
 
-export const generatePodcast = async (fileId) => {
-  try {
-    console.log('🎙️ Generating podcast for file:', fileId);
-    
-    if (!fileId) {
-      throw new Error('Missing fileId parameter. Please ensure a document is selected.');
-    }
-    
-    const response = await fetch(`${API_BASE_URL}/generate-podcast`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fileId }),
-      signal: AbortSignal.timeout(60000) // 60 second timeout for audio generation
-    });
-    
-    if (!response.ok) {
-      await handleApiError(response, '/generate-podcast');
-    }
-    
-    const result = await response.json();
-    
-    console.log('✅ Podcast generated successfully:', {
-      audioUrl: result.podcast?.audioUrl || result.fallback?.audioUrl,
-      duration: result.podcast?.duration || result.fallback?.duration,
-      syncDataPoints: result.podcast?.syncData?.length || result.fallback?.syncData?.length,
-      source: result.success ? 'Watson TTS' : 'Mock Data',
-      fileId: fileId
-    });
-    
-    return result;
-    
-  } catch (error) {
-    console.error('🚨 Podcast generation failed:', error);
-    
-    if (error.name === 'TimeoutError') {
-      throw new Error('Podcast generation timed out. The document might be too large. Please try again.');
-    } else if (error.message.includes('Failed to fetch')) {
-      throw new Error('Cannot connect to podcast service. Please check if the backend server is running.');
-    }
-    
-    throw new Error(`Podcast generation error: ${error.message}`);
-  }
+export const generateFlashcards = async (fileId) => {
+  const response = await axios.post(`${API_BASE_URL}/generate-flashcards`, { fileId });
+  return response.data;
+};
+
+export const chatWithDocument = async (fileId, question) => {
+  const response = await axios.post(`${API_BASE_URL}/chat`, { fileId, question });
+  return response.data;
 };
