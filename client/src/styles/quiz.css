@@ -41,6 +41,11 @@
   margin-bottom: 30px;
   padding-bottom: 20px;
   border-bottom: 2px solid #f0f0f0;
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  align-items: flex-start;
 }
 
 .quiz-header h2 {
@@ -77,6 +82,20 @@
   color: #4CAF50;
   font-size: 1.1em;
 }
+
+/* Ensure header close button sits at top right */
+.quiz-header .close-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translateY(-15%);
+  background: #f5f5f5;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 1.1rem;
+}
+.quiz-header .close-btn:hover { background:#e0e0e0; }
 
 /* Question Section */
 .question-section {

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { generateSummary, generateFlashcards, chatWithDocument, generateQuiz } from '../services/api';
 import Quiz from '../components/Quiz';
@@ -27,6 +27,21 @@ const DocumentView = () => {
   const [showPodcast, setShowPodcast] = useState(false);
   const [showAIAgent, setShowAIAgent] = useState(false);
   const [aiAgentMinimized, setAiAgentMinimized] = useState(false);
+
+  // Unified ESC key handler to close any open overlay
+  const handleGlobalKey = useCallback((e) => {
+    if (e.key === 'Escape') {
+      if (showQuiz) setShowQuiz(false);
+      else if (showFlashcards) setShowFlashcards(false);
+      else if (showPodcast) setShowPodcast(false);
+      else if (showAIAgent) { setShowAIAgent(false); setAiAgentMinimized(false); }
+    }
+  }, [showQuiz, showFlashcards, showPodcast, showAIAgent]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleGlobalKey);
+    return () => window.removeEventListener('keydown', handleGlobalKey);
+  }, [handleGlobalKey]);
 
   // Fetch PDF data when component mounts
   useEffect(() => {
@@ -143,7 +158,7 @@ const DocumentView = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="document-view-shell">
       {/* PDF Section - Full Left Half */}
       <div className="w-1/2 flex flex-col border-r-2 border-gray-300">
         <PDFViewer pdfData={pdfData} fileId={fileId} />
@@ -220,6 +235,12 @@ const DocumentView = () => {
                   placeholder="Ask a question about the PDF content..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (tab === 'chat' && e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleGenerate();
+                    }
+                  }}
                 />
               )}
               
@@ -259,13 +280,15 @@ const DocumentView = () => {
                 </div>
               )}
               
-              <button 
-                className={`generate-button ${loading ? 'loading' : 'active'}`}
-                onClick={handleGenerate}
-                disabled={loading}
-              >
-                {loading ? 'Generating...' : `Generate ${tab.charAt(0).toUpperCase() + tab.slice(1)}`}
-              </button>
+              {tab !== 'chat' && (
+                <button 
+                  className={`generate-button ${loading ? 'loading' : 'active'}`}
+                  onClick={handleGenerate}
+                  disabled={loading}
+                >
+                  {loading ? 'Generating...' : `Generate ${tab.charAt(0).toUpperCase() + tab.slice(1)}`}
+                </button>
+              )}
               
               <div className="results-container">
                 <h3 className="results-header">Results</h3>
@@ -280,7 +303,8 @@ const DocumentView = () => {
       
       {/* Overlay Components */}
       {showQuiz && (
-        <div className="overlay">
+        <div className="overlay" role="dialog" aria-modal="true" aria-label="Quiz dialog">
+          <button className="overlay-close-btn" aria-label="Close quiz overlay" onClick={() => setShowQuiz(false)}>✕</button>
           <Quiz 
             fileId={fileId}
             onClose={() => setShowQuiz(false)} 
@@ -289,7 +313,8 @@ const DocumentView = () => {
       )}
       
       {showFlashcards && (
-        <div className="overlay">
+        <div className="overlay" role="dialog" aria-modal="true" aria-label="Flashcards dialog">
+          <button className="overlay-close-btn" aria-label="Close flashcards overlay" onClick={() => setShowFlashcards(false)}>✕</button>
           <Flashcard 
             documentId={fileId} 
             onClose={() => setShowFlashcards(false)} 
@@ -298,7 +323,8 @@ const DocumentView = () => {
       )}
       
       {showPodcast && (
-        <div className="overlay">
+        <div className="overlay" role="dialog" aria-modal="true" aria-label="Podcast player dialog">
+          <button className="overlay-close-btn" aria-label="Close podcast overlay" onClick={() => setShowPodcast(false)}>✕</button>
           <PodcastPlayer 
             documentId={fileId} 
             onClose={() => setShowPodcast(false)} 
@@ -326,7 +352,7 @@ const DocumentView = () => {
           />
         </div>
       )}
-    </div>
+  </div>
   );
 };
 

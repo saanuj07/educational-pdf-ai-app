@@ -7,7 +7,8 @@ import {
   faMagnifyingGlass,   // For Analyze PDF
   faBrain,             // For Generate Quiz
   faFileLines,         // For Summarize
-  faClone              // For Flashcards
+  faClone,             // For Flashcards
+  faFilePdf            // For recent PDF icons
 } from '@fortawesome/free-solid-svg-icons';
 
 const Home = () => {
@@ -139,19 +140,46 @@ const Home = () => {
 
   return (
     <div className="home-container">
-      {/* Animated Header */}
-      <div className={`hero-section ${animateTitle ? 'animate-in' : ''}`}>
+      {/* Full-width Hero Section */}
+      <div className={`hero-section ${animateTitle ? 'animate-in' : ''} full-width`}>        
         <div className="floating-shapes">
           <div className="shape shape-1"></div>
           <div className="shape shape-2"></div>
           <div className="shape shape-3"></div>
         </div>
-        
-        <h1 className="main-title">
-          Educational PDF AI
-          <span className="subtitle">Transform your PDFs into interactive learning experiences</span>
-        </h1>
-        
+        <div className="hero-logo-block">
+          <div className="brand-icon" aria-hidden="true">
+            {/* Simplified inline SVG approximating book + PDF + AI bubble */}
+            <svg width="140" height="140" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="pdfPaper" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#f5f7ff" />
+                  <stop offset="100%" stopColor="#eef2ff" />
+                </linearGradient>
+              </defs>
+              {/* Open book */}
+              <path d="M15 95V40c0-6 5-11 11-11h33c4 0 7 1 11 3v63c-4-2-7-3-11-3H26c-6 0-11 5-11 3Z" stroke="#0f2942" strokeWidth="4" fill="#ffffff" />
+              <path d="M125 95V40c0-6-5-11-11-11H81c-4 0-7 1-11 3v63c4-2 7-3 11-3h33c6 0 11 5 11 3Z" stroke="#0f2942" strokeWidth="4" fill="#ffffff" />
+              <path d="M57 35v63" stroke="#0f2942" strokeWidth="4" />
+              {/* Page lines */}
+              <path d="M88 55h18M88 67h18M88 79h14" stroke="#0f2942" strokeWidth="4" strokeLinecap="round" />
+              {/* PDF sheet in front */}
+              <rect x="54" y="55" width="54" height="64" rx="6" fill="url(#pdfPaper)" stroke="#0f2942" strokeWidth="4" />
+              <path d="M108 55v16H92" stroke="#0f2942" strokeWidth="4" strokeLinejoin="round" fill="none" />
+              {/* PDF badge */}
+              <rect x="66" y="82" width="34" height="18" rx="4" fill="#ef4444" stroke="#0f2942" strokeWidth="3" />
+              <text x="83" y="95" fontSize="10" fontWeight="700" textAnchor="middle" fill="#ffffff" fontFamily="'Segoe UI',sans-serif">PDF</text>
+              {/* AI speech bubble */}
+              <path d="M90 18h26c5.5 0 10 4.5 10 10v16c0 5.5-4.5 10-10 10h-11l-8 8-2-8H90c-5.5 0-10-4.5-10-10V28c0-5.5 4.5-10 10-10Z" fill="#4f93ff" stroke="#0f2942" strokeWidth="4" strokeLinejoin="round" />
+              <text x="103" y="41" fontSize="14" fontWeight="700" textAnchor="middle" fill="#0f2942" fontFamily="'Segoe UI',sans-serif">AI</text>
+            </svg>
+          </div>
+          <h1 className="brand-title">
+            <span className="brand-line">Educational</span>
+            <span className="brand-line">PDF <span className="ai-grey">AI</span></span>
+          </h1>
+          <p className="brand-tagline">Transform your PDFs into interactive learning experiences</p>
+        </div>
         <div className="feature-pills">
           <span className="pill">AI-Powered</span>
           <span className="pill">Smart Analysis</span>
@@ -159,7 +187,47 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Upload Section */}
+      <div className="home-shell">
+        {/* Sidebar Recent Documents */}
+        <aside className="recent-sidebar">
+          <div className="recent-sidebar-inner">
+            <h3 className="recent-sidebar-title">Recent Documents</h3>
+            {recentFiles.length === 0 && (
+              <div className="recent-empty">No documents yet. Upload a PDF to get started.</div>
+            )}
+            {recentFiles.length > 0 && (
+              <div className="recent-list">
+                {recentFiles.map((file, index) => (
+                  <div
+                    key={file.id}
+                    className="file-card sidebar"
+                    onClick={() => openRecentFile(file)}
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <div className="file-icon pdf-icon" aria-label="PDF document">
+                      <span className="pdf-corner" />
+                      <span className="pdf-label">PDF</span>
+                      <span className="pdf-pages" title={`${file.pages} pages`}>{file.pages}</span>
+                      <span className="sr-only">PDF file {file.filename} with {file.pages} pages</span>
+                    </div>
+                    <div className="file-info">
+                      <h4 title={file.filename}>{file.filename}</h4>
+                      <div className="file-meta">
+                        <span>{file.pages}p</span>
+                        <span>{formatFileSize(file.size)}</span>
+                      </div>
+                      <div className="file-date">
+                        {new Date(file.uploadDate).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </aside>
+  <main className="main-area">
+  {/* Upload Section */}
       <div className="upload-section">
         <div 
           className={`upload-area ${dragActive ? 'drag-active' : ''} ${isUploading ? 'uploading' : ''}`}
@@ -208,7 +276,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
+  {/* Quick Actions */}
       <div className="quick-actions">
         <h3>Quick Actions</h3>
         <div className="action-grid">
@@ -246,40 +314,11 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Recent Files */}
-      {recentFiles.length > 0 && (
-        <div className="recent-files">
-          <h3>Recent Documents</h3>
-          <div className="files-grid">
-            {recentFiles.map((file, index) => (
-              <div 
-                key={file.id} 
-                className="file-card"
-                onClick={() => openRecentFile(file)}
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="file-icon">📄</div>
-                <div className="file-info">
-                  <h4>{file.filename}</h4>
-                  <div className="file-meta">
-                    <span>{file.pages} pages</span>
-                    <span>{formatFileSize(file.size)}</span>
-                  </div>
-                  <div className="file-date">
-                    {new Date(file.uploadDate).toLocaleDateString()}
-                  </div>
-                </div>
-                <div className="file-actions">
-                  <button className="action-quick">🔍</button>
-                  <button className="action-quick">📊</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+  {/* (Sidebar now handles recent documents) */}
+        </main>
+      </div>
 
-      {/* Features Overview */}
+      {/* Features Overview (moved outside shell for true centering) */}
       <div className="features-overview">
         <h3>🎯 What You Can Do</h3>
         <div className="features-grid">
@@ -309,9 +348,9 @@ const Home = () => {
             <p>Convert your PDF into engaging audio content</p>
           </div>
           <div className="feature-card">
-            <div className="feature-icon">📈</div>
-            <h4>Progress Tracking</h4>
-            <p>Monitor your learning progress and achievements</p>
+            <div className="feature-icon">🧑‍💻</div>
+            <h4>AI Assistant</h4>
+            <p>Get contextual guidance and support while you study your PDFs</p>
           </div>
         </div>
       </div>

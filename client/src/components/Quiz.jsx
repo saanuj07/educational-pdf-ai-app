@@ -154,6 +154,7 @@ const Quiz = ({ fileId, documentId, onClose }) => {
         <div className="quiz-score">
           Score: {score} / {getAnsweredCount()}
         </div>
+        <button onClick={onClose} className="close-btn" aria-label="Close quiz">✕</button>
       </div>
 
       <div className="quiz-content">

@@ -67,6 +67,83 @@ body {
   overflow-x: hidden;
 }
 
+/* New layout shell with left sidebar */
+.home-shell {
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.recent-sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  margin-top: 0;
+}
+
+.recent-sidebar-inner {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(14px);
+  border-radius: 18px;
+  padding: 1rem 1rem 1.5rem;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.4);
+}
+
+.recent-sidebar-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1rem;
+  position: sticky;
+  top: 0;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(14px);
+  padding: 0.5rem 0;
+  z-index: 2;
+}
+
+.recent-empty {
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.4;
+  background: #f3f4f6;
+  padding: 0.75rem;
+  border-radius: 10px;
+}
+
+.recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Sidebar variant of file-card */
+.file-card.sidebar {
+  padding: 0.6rem 0.6rem;
+  animation: slideUp 0.4s ease forwards;
+  box-shadow: none;
+  background: rgba(255,255,255,0.95);
+}
+
+.file-card.sidebar:hover {
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+
+.main-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* center inner max-width sections */
+}
+
 /* Hero Section */
 .hero-section {
   text-align: center;
@@ -77,6 +154,12 @@ body {
   opacity: 0;
   transform: translateY(30px);
   transition: all 0.8s ease;
+}
+
+.hero-section.full-width {
+  max-width: 1100px;
+  margin: 0 auto 1.5rem;
+  padding-top: 1rem;
 }
 
 .hero-section.animate-in {
@@ -145,6 +228,85 @@ body {
   background-clip: text;
 }
 
+/* Brand block (logo + title) */
+.hero-brand {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-left: 1rem;
+}
+
+.brand-logo {
+  font-size: 4.25rem;
+  line-height: 1;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.25));
+}
+.brand-logo .logo-badge {
+  font-size: 0.75rem;
+  background: #ef4444;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+  position: absolute;
+  top: 6px;
+  left: -10px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 10px -2px rgba(0,0,0,0.35);
+}
+
+/* Grey AI part */
+.ai-grey {
+  background: none;
+  -webkit-text-fill-color: #808080 !important;
+  color: #808080;
+  text-shadow: none;
+}
+
+/* New stacked hero logo/title */
+.hero-logo-block {
+  display: flex;
+  flex-direction: row; /* place text adjacent to the logo */
+  align-items: center;
+  gap: 1.5rem; /* more space between icon and text */
+  max-width: 760px;
+  padding-left: 0; /* centered layout - remove left padding */
+  animation: fadeIn 0.8s ease;
+  text-align: left; /* ensure left aligned copy */
+  margin: 0 auto; /* center whole block within hero section */
+  width: fit-content;
+}
+.hero-logo-block .brand-icon { width: 140px; height: 140px; flex-shrink: 0; }
+
+/* Stack vertically on narrow screens */
+@media (max-width: 700px) {
+  .hero-logo-block { flex-direction: column; align-items: center; text-align: center; gap: 0.75rem; max-width: 560px; }
+}
+
+.brand-title { font-size: 3.2rem; font-weight: 800; line-height: 1.05; color:#1f2937; }
+.brand-title .brand-line { display:block; }
+.brand-title .ai-grey { font-weight: 800; }
+.brand-tagline { font-size:1.05rem; color:#334155; margin-top:0.25rem; font-weight:500; }
+
+@media (max-width: 900px) {
+  .brand-title { font-size:2.4rem; }
+  .hero-logo-block .brand-icon { width:110px; height:110px; }
+}
+
+@media (max-width: 900px) {
+  .hero-brand { flex-direction: column; align-items: flex-start; }
+  .brand-logo { font-size: 3.25rem; }
+  .brand-logo .logo-badge { left: 0; }
+}
+
 .subtitle {
   display: block;
   font-size: 1.2rem;
@@ -179,8 +341,9 @@ body {
 
 /* Upload Section */
 .upload-section {
-  max-width: 900px;
-  margin: 3rem auto;
+  max-width: 1000px;
+  width: 100%;
+  margin: 2rem auto 2.5rem; /* center horizontally */
   position: relative;
   z-index: 2;
 }
@@ -189,7 +352,7 @@ body {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border: 3px dashed #cbd5e1;
-  width:900px;
+  width: 100%;
   border-radius: 20px;
   padding: 1.5rem;
   text-align: center;
@@ -314,8 +477,9 @@ body {
 
 /* Quick Actions */
 .quick-actions {
-  max-width: 800px;
-  margin: 3rem auto;
+  max-width: 1000px;
+  width: 100%;
+  margin: 1rem auto 3rem; /* center horizontally */
   text-align: center;
   position: relative;
   z-index: 2;
@@ -392,12 +556,8 @@ body {
 .action-flashcards:hover { background: rgba(139, 92, 246, 0.1); }
 
 /* Recent Files */
-.recent-files {
-  max-width: 800px;
-  margin: 3rem auto;
-  position: relative;
-  z-index: 2;
-}
+/* recent-files section no longer used (kept for backward compat) */
+.recent-files { display:none; }
 
 .recent-files h3 {
   color: white;
@@ -446,6 +606,64 @@ body {
   opacity: 0.8;
 }
 
+/* Enhanced PDF icon styling */
+.pdf-icon {
+  position: relative;
+  width: 46px;
+  height: 56px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 6px;
+  border-radius: 10px;
+  background:
+    linear-gradient(160deg, #ffffff 0%, #f3f4f6 55%, #e5e7eb 100%);
+  box-shadow: 0 4px 10px -2px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.08);
+  color: #b91c1c;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.file-card:hover .pdf-icon { transform: translateY(-2px) rotate(-2deg); box-shadow: 0 6px 14px -2px rgba(0,0,0,0.25); }
+.file-card.sidebar:hover .pdf-icon { transform: translateY(-1px) scale(1.03); }
+
+.pdf-icon .pdf-label { z-index: 2; font-size: 0.65rem; background: linear-gradient(90deg,#dc2626,#b91c1c); -webkit-background-clip:text; background-clip:text; color: transparent; text-shadow: 0 0 2px rgba(255,255,255,0.4); }
+.pdf-icon .pdf-corner {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 20px; height: 20px;
+  background: linear-gradient(135deg,#ef4444,#b91c1c);
+  clip-path: polygon(0 0,100% 0,100% 100%);
+  box-shadow: -2px 2px 4px rgba(0,0,0,0.15);
+}
+.pdf-icon .pdf-corner::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg,#f87171,#dc2626);
+  opacity: 0.65;
+}
+.pdf-icon .pdf-pages {
+  position: absolute;
+  bottom: 2px; right: 4px;
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: #6b7280;
+  background: rgba(255,255,255,0.85);
+  padding: 1px 4px 0;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Smaller icon variant inside sidebar layout */
+.file-card.sidebar .pdf-icon { width: 40px; height: 50px; border-radius: 8px; }
+.file-card.sidebar .pdf-icon .pdf-pages { font-size: 0.5rem; }
+
 .file-info {
   flex: 1;
 }
@@ -493,7 +711,7 @@ body {
 
 /* Features Overview */
 .features-overview {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 4rem auto 2rem;
   position: relative;
   z-index: 2;
@@ -728,10 +946,20 @@ body {
 }
 
 /* Responsive Design */
+@media (max-width: 1100px) {
+  .home-shell { flex-direction: column; }
+  .recent-sidebar { position: relative; width: 100%; max-height: none; order: 2; margin-top: 1rem; }
+  .recent-sidebar-inner { display: flex; flex-direction: column; }
+  .recent-list { flex-direction: row; overflow-x: auto; }
+  .file-card.sidebar { min-width: 220px; }
+}
+
 @media (max-width: 768px) {
   .home-container {
     padding: 1rem;
   }
+  .upload-section { margin-top: 1rem; }
+  .quick-actions { margin-top: 1.5rem; }
   
   .main-title {
     font-size: 2.5rem;
