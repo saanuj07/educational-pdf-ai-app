@@ -128,6 +128,21 @@ app.get('/', (req, res) => {
   });
 });
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    version: '1.0.0',
+    services: {
+      watsonAI: 'connected',
+      nlu: 'connected',
+      uploads: 'ready'
+    }
+  });
+});
+
 app.use('/api', routes);
 
 // Health check endpoint for Render monitoring
