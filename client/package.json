@@ -52,11 +52,11 @@
   "overrides": {
     "postcss": "^8.4.47",
     "nth-check": "^2.1.1",
-    "webpack-dev-server": "^5.2.1",
+    "webpack-dev-server": "^4.15.1",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0"
   },
   "resolutions": {
-    "webpack-dev-server": "^5.2.1"
+    "webpack-dev-server": "^4.15.1"
   }
 }
