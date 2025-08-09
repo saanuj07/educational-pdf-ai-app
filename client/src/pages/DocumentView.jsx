@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { generateSummary, generateFlashcards, chatWithPDF, generateQuiz } from '../services/api';
+import { generateSummary, generateFlashcards, chatWithDocument, generateQuiz } from '../services/api';
 import Quiz from '../components/Quiz';
 import Flashcard from '../components/Flashcard';
 import PDFViewer from '../components/PDFViewer';
@@ -112,7 +112,7 @@ const DocumentView = () => {
             alert('Please enter a question');
             return;
           }
-          response = await chatWithPDF(fileId, input);
+          response = await chatWithDocument(fileId, input);
           setResult(`Q: ${response.question}\nA: ${response.answer}`);
           break;
         case 'quiz':

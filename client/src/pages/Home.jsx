@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { uploadPDF } from '../services/api';
+import { uploadDocument } from '../services/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faMagnifyingGlass,   // For Analyze PDF
@@ -80,7 +80,7 @@ const Home = () => {
     const progressInterval = simulateProgress();
 
     try {
-      const result = await uploadPDF(file);
+      const result = await uploadDocument(file);
       
       // Complete the progress bar
       clearInterval(progressInterval);

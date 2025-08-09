@@ -250,7 +250,17 @@ const PodcastPlayer = ({ documentId, onClose }) => {
           onEnded={() => setPlaying(false)}
           onLoadStart={() => console.log('🔄 Audio load started')}
           onCanPlay={() => console.log('✅ Audio can play')}
-          onError={(e) => console.error('❌ Audio error:', e.target.error)}
+          onError={(e) => {
+            const error = e.target.error;
+            console.error('❌ Audio error details:', {
+              code: error?.code,
+              message: error?.message,
+              src: e.target.src,
+              readyState: e.target.readyState,
+              networkState: e.target.networkState
+            });
+            setError(`Audio playback error: ${getMediaErrorMessage(error?.code)}`);
+          }}
         />
       )}
 
