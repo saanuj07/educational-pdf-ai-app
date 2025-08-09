@@ -1,0 +1,54 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security audit weekly on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          client/package-lock.json
+          server/package-lock.json
+    
+    - name: Install root dependencies
+      run: npm ci
+      
+    - name: Install client dependencies
+      run: cd client && npm ci
+      
+    - name: Install server dependencies
+      run: cd server && npm ci
+      
+    - name: Run security audit - Root
+      run: npm audit --audit-level=moderate
+      
+    - name: Run security audit - Client
+      run: cd client && npm audit --audit-level=moderate
+      
+    - name: Run security audit - Server
+      run: cd server && npm audit --audit-level=moderate
+      
+    - name: Check for known vulnerabilities
+      run: |
+        echo "✅ Security audit completed successfully"
+        echo "📊 Summary:"
+        echo "- Root project: $(npm audit --audit-level=low --json 2>/dev/null | jq -r '.metadata.vulnerabilities.total // 0') vulnerabilities"
+        echo "- Client: $(cd client && npm audit --audit-level=low --json 2>/dev/null | jq -r '.metadata.vulnerabilities.total // 0') vulnerabilities"
+        echo "- Server: $(cd server && npm audit --audit-level=low --json 2>/dev/null | jq -r '.metadata.vulnerabilities.total // 0') vulnerabilities"
