@@ -14,7 +14,7 @@ npm install
 echo "🏗️ Building client application..."
 cd client
 echo "📦 Installing client dependencies..."
-npm ci --only=production
+npm install --production=false
 echo "🔨 Building React app..."
 npm run build
 cd ..
@@ -22,7 +22,7 @@ cd ..
 # Install server dependencies
 echo "📦 Installing server dependencies..."
 cd server
-npm ci --only=production
+npm install --production=false
 cd ..
 
 # Create necessary directories
@@ -32,14 +32,14 @@ mkdir -p server/uploads/audio
 mkdir -p logs
 
 # Set permissions
-chmod -R 755 server/uploads
-chmod -R 755 logs
+chmod -R 755 server/uploads 2>/dev/null || true
+chmod -R 755 logs 2>/dev/null || true
 
 # Verify build
 echo "🔍 Verifying build..."
 if [ -d "client/build" ]; then
     echo "✅ Client build successful - found build directory"
-    echo "📊 Build size: $(du -sh client/build | cut -f1)"
+    echo "📊 Build size: $(du -sh client/build 2>/dev/null | cut -f1 || echo 'Unknown')"
 else
     echo "❌ Client build failed - no build directory found"
     exit 1
@@ -54,7 +54,7 @@ fi
 
 echo "✅ Build completed successfully!"
 echo "📁 Build artifacts:"
-echo "   - Client build: client/build/ ($(ls -la client/build | wc -l) files)"
+echo "   - Client build: client/build/ ($(ls -la client/build 2>/dev/null | wc -l || echo '0') files)"
 echo "   - Server: server/"
 echo "   - Uploads: server/uploads/"
 echo "🚀 Ready for deployment!"

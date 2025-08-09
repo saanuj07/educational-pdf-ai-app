@@ -146,13 +146,14 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Simple test route works!' });
 });
 
-app.use('/api/ai-agent', require('./routes/ai-agent'));
+// Temporarily disable AI agent routes to fix deployment
+// app.use('/api/ai-agent', require('./routes/ai-agent'));
 
-// Direct AI agent test route for debugging
-app.get('/api/ai-agent-direct/test', (req, res) => {
-  console.log('🤖 Direct AI Agent test route hit!');
-  res.json({ message: 'Direct AI Agent route is working!', timestamp: new Date().toISOString() });
-});
+// Direct AI agent test route for debugging (commented out to avoid conflicts)
+// app.get('/api/ai-agent-direct/test', (req, res) => {
+//   console.log('🤖 Direct AI Agent test route hit!');
+//   res.json({ message: 'Direct AI Agent route is working!', timestamp: new Date().toISOString() });
+// });
 
 app.post('/api/ai-agent-direct/chat', (req, res) => {
   console.log('🤖 Direct AI Agent chat route hit!', req.body);
