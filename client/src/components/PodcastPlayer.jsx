@@ -52,7 +52,10 @@ const PodcastPlayer = ({ documentId, onClose }) => {
         // Convert relative URL to absolute URL
         const podcastData = { ...response.podcast };
         if (podcastData.audioUrl && podcastData.audioUrl.startsWith('/api/')) {
-          podcastData.audioUrl = `http://localhost:5000${podcastData.audioUrl}`;
+          podcastData.audioUrl =
+            process.env.NODE_ENV === 'production'
+              ? podcastData.audioUrl
+              : `http://localhost:5000${podcastData.audioUrl}`;
           console.log('🔗 Converted audio URL to:', podcastData.audioUrl);
         }
         setPodcastData(podcastData);
