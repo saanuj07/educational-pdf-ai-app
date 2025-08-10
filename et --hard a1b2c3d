@@ -1,0 +1,29 @@
+[33m4ac743f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Initial commit
+[33m9673b81[m Fix security workflow audit commands
+[33m5a47230[m Final security configuration for GitHub Actions
+[33m1fdb1bc[m Enhance GitHub Actions security workflows
+[33mcacfedb[m Fix npm security vulnerabilities
+[33m9ae17e3[m Fix production API configuration for Render deployment
+[33m9455604[m Fix Watson AI integration and implement NLU fallback for quiz and flashcards
+[33m17ac6b3[m  Updated React Components & Dependencies
+[33m86065f1[m  Added Client Configuration & Styles
+[33mb0dbcf8[m  Major Watson AI Integration & Fixes
+[33mf03017e[m Updated quiz controller with dynamic fallback
+[33m5ff6b20[m Fix Express routing error and improve deployment stability
+[33m9508e30[m Final deployment preparation - added deployment guides and environment config
+[33m1673f23[m Add Render deployment configuration
+[33m6c1ccbe[m Fix webpack-dev-server compatibility and dependency management
+[33m1698439[m Fix webpack-dev-server security vulnerabilities
+[33mb9136ab[m Merge remote changes and resolve Home.jsx conflicts
+[33m39b25f3[m Add comprehensive podcast feature with PDF synchronization
+[33mb87c755[m Merge pull request #1 from yamansharma5/main
+[33md3356e2[m Update Home.jsx
+[33md620aa7[m Update tailwind.css
+[33m57a3753[m feat: Add interactive flashcard session with spaced repetition
+[33m9b4cece[m  Implement Interactive Quiz Feature with Enhanced Error Handling
+[33m0772a99[m  Add comprehensive security documentation
+[33m0fd0c07[m  Update dependencies to address security vulnerabilities
+[33m15ab585[m Merge remote-tracking branch 'origin/main'
+[33md0fb701[m  Add one-command setup scripts for easy project installation
+[33mf56917c[m Initial commit
+[33m207c803[m  Initial commit: Educational PDF AI App with Watson integration
