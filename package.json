@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "node dev-start.js",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
     "client": "cd client && npm start",
     "server": "cd server && nodemon server.js",
     "build": "npm run install:client && cd client && npm run build",
@@ -12,7 +12,7 @@
     "install:server": "cd server && npm install",
     "install:all": "npm run install:client && npm run install:server",
     "start": "cd server && node server.js",
-    "postinstall": "npm run install:all && npm run build"
+    "postinstall": "npm run install:client && npm run build"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

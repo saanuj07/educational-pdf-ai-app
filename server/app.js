@@ -119,7 +119,7 @@ app.get('/', (req, res) => {
     message: '🎓 Educational PDF AI Backend API',
     status: 'Server is running',
     frontend: 'http://localhost:3000',
-    api: `http://localhost:${process.env.PORT || 5000}/api`,
+  api: `http://localhost:${process.env.PORT || process.env.API_PORT || 5000}/api`,
     endpoints: {
       upload: '/api/upload',
       health: '/api/health'
